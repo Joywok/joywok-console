@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head>
+    <title></title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="css/jwcmn.css">
+    <link rel="stylesheet" type="text/css" href="css/jw.editor.css">
+    <script src="../bower_components/jquery/dist/jquery.js"></script>
+    <script src="../bower_components/underscore/underscore.js"></script>
+    <script src="../bower_components/backbone/backbone.js"></script>
+    <script type="text/javascript" src="scripts/joywok.js"></script>
+    <script type="text/javascript" src="scripts/jw.uploader.js"></script>
+    <script type="text/javascript" src="scripts/jw.form.js"></script>
+    <script type="text/javascript" src="scripts/jw.editor.js"></script>
+
+    <style type="text/css">
+        *{margin:0;padding:0;}
+        html{height: 100%}
+        body{overflow:hidden;position: relative;height: 100%;font-family: '微软雅黑', Arial, sans-serif;background: #f7f7f7;}
+        .ellipsis{white-space:nowrap;overflow:hidden;-o-text-overflow:ellipsis;/*word-wrap:break-word;*/
+    -moz-binding:url('ellipsis.xml#ellipsis');text-overflow:ellipsis;display:block;}
+        .hide{display: none;}
+
+        .blog-main{position: relative;height: 100%;min-height: 768px;}
+        .blog-main .blog-w{}
+        .blog-main .blog-w .blog-c{position: absolute;top:0;right: 0;bottom: 0;left: 0;overflow: hidden;}
+
+        .sidbar{position:absolute;left:0;top:0;bottom:0;width: 160px;background:#e64a42;}
+        .sidbar .sidbar-w{}
+        .sidbar .sidbar-w .sidbar-c{}
+        .sidbar-c .user{width: 90px;margin:40px auto;}
+        .user .user-logo{width: 90px;height:90px;border-radius: 90px;overflow: hidden}
+        .user .user-logo img{max-width:100%;max-height: 100%;}
+        .user .user-name{font-size: 16px;color: #fff;margin:10px 0 0;text-align: center}
+        .sidbar-c .nav{}
+        .nav .nav-w{}
+        .nav .nav-w .nav-c{}
+        .nav-c .nav-item{padding:0 25px;border-top: 1px solid #da463e;cursor: pointer}
+        .nav-c .nav-item:first-child{border-top: none}
+        .nav-c .nav-item.active{background: #d2443c;cursor:default}
+        .nav-c .nav-item .nav-item-c{overflow:hidden;line-height: 30px;padding:15px 0;}
+        .nav-item .nav-item-c .nav-ico-c{float: left;width: 38px;}
+        .nav-item .nav-item-c .nav-ico{float: left;background: url(images/icons.png) no-repeat}
+        .nav-item.blog .nav-ico{margin:2px 0px 0 0;width: 17px;height: 24px;background-position: -20px 0;}
+        .nav-item.activity .nav-ico{margin:0px 5px 0 0;width:20px;height:20px;background-position: -40px 0;}
+        .nav-item.data .nav-ico{margin:7px 0px 0 0;width:19px;height: 15px;background-position: -100px 0;}
+        .nav-item.manage .nav-ico{margin:4px 0px 0 0;width:22px;height:22px;background-position: -60px 0;}
+        .nav-item .nav-item-c .nav-txt{float:left;color:#fff;font-size: 14px;}
+        .sidbar .opear{position: absolute;bottom:30px;left:0;right:0;text-align: center}
+        .sidbar .opear .opear-setting{margin:0 5px;display: inline-block;width: 30px;height: 30px;background:#d2443c;cursor: pointer;border-radius: 30px;}
+        .opear .opear-setting .ico{margin:6px;width:18px;height:18px;background: url(images/icons.png) no-repeat -180px 0;}
+        .sidbar .opear .opear-exit{margin:0 5px;display: inline-block;width: 30px;height: 30px;background:#d2443c;cursor: pointer;border-radius: 30px;}
+        .opear .opear-exit .ico{margin:7px;width: 16px;height:16px;background: url(images/icons.png) no-repeat -120px 0;}
+
+        .main{position:absolute;left:190px;top:0;right:30px;bottom:0;overflow: hidden;}
+        .main .main-w{width: 100%;height: 100%}
+        .main .main-w .main-c{position:relative;width: 100%;height: 100%}
+        .main-c .m-i{position: absolute;top:0;left:0;right:0;bottom:0;background: #f7f7f7}
+        .m-i .m-i-t{position:absolute;top:0;left:0;right:0;height: 60px;}
+        .m-i-t .m-i-ico-c{float:left;width:53px;height:100%;background:#666;}
+        .m-i-t .m-i-t-opear{float:left;margin:0 0 0 20px;}
+        .m-i-t .m-i-t-opear .m-i-t-opear-i{float: left;margin:0 0 0 35px;line-height: 60px;color: #b0b0b0;cursor: pointer}
+        .m-i-t .m-i-t-opear .m-i-t-opear-i:first-child{margin-left: 0;}
+        .m-i-t .m-i-t-opear .m-i-t-opear-i.active{color: #bf0404;cursor:default}
+        .m-i-t .m-i-t-b{float: right;}
+        .new-blog{float: right;margin:10px 0 0;padding:0 10px;height:40px;background: #666666;color: #fff;line-height: 40px;cursor: pointer}
+        .new-blog .new-blog-ico{float: left;margin:12px 10px 0 8px; width:16px;height:16px;background: url(images/icons.png) no-repeat 0 -20px;}
+        .new-blog .new-blog-txt{float: left;margin:0 10px 0 0}
+        .new-blog:hover .new-blog-ico{background-position: 0 0px;}
+
+        .save-btn{float: right;margin:10px 0 0;padding: 0 10px;min-width:100px;height: 40px;background: #666;color: #fff;line-height: 40px;cursor: pointer;border:none;outline: none;}
+        .cancel-save{float: right;margin:10px 20px 0 0;padding: 0 10px;min-width: 100px;height: 40px;background: #ddd;color: #b0b0b0;line-height: 40px;cursor: pointer;border:none;outline: none;}
+        .edit-submit-btn{float: right;padding:0 10px;min-width: 100px;height: 30px;line-height: 30px;margin:15px 0px 0 0;background: #e64a42;color: #fff;cursor: pointer;border: none;outline: none;}
+        .edit-save-btn{float: right;padding: 0 10px;min-width: 100px;height: 30px;line-height: 30px;margin:15px 15px 0 0;background: #ddd;color: #494949;cursor: pointer;border: none;outline: none;}
+        .edit-cancel-btn{float: right;padding:0 10px;min-width: 100px;height: 30px;line-height: 30px;margin:15px 15px 0 0;background: #ddd;color: #494949;cursor: pointer;border: none;outline: none;}
+
+        .m-i .m-i-c{position: absolute;top:80px;left:0;right: 0;bottom:0;}
+
+        .m-i .m-i-c{position: absolute;top:90px;left: 0;right: 0;bottom: 20px;}
+        .m-i-c .list-show{float: left;width: 314px;}
+        .list-show .list-show-item{margin-top: 45px;}
+        .list-show .list-show-item:first-child{margin-top: 0;}
+        .list-show-item .list-show-item-w{}
+        .list-show-item-w .list-show-item-c{}
+        .list-show-item-c .list-show-item-imgc{width: 100%;height: 200px;position: relative;}
+        .list-show-item-c .list-show-item-imgc img{max-width: 100%;max-height: 100%;}
+        .list-show-item-c .list-show-item-imgc .list-show-item-tag{position: absolute;top:10px;right:10px;min-width: 50px;height: 30px;line-height: 30px;padding:0 10px;background: #bc0a00;color: #fff;text-align: center;}
+        .list-show-item-c .list-show-item-name{margin-top:15px;line-height: 25px;color: #666;font-size: 18px;cursor: pointer;}
+        .list-show-item-c .list-show-item-name:hover{color: #f4594f}
+        .list-show-item-c .list-show-item-info{margin-top:5px;height: 20px;line-height: 20px;color: #b0b0b0;font-size: 13px;}
+        .list-show-item-c .list-show-item-info span{float: left;margin-left:15px;}
+        .list-show-item-c .list-show-item-info span:first-child{margin-left: 0;}
+
+        .m-i-c .list-w{position: absolute;top:0;right: 0;left: 365px;bottom:0;background: #fff;}
+        .list-w .list-top{margin:10px 20px 0 15px;height:34px;line-height: 34px;}
+        .list-w .list-top .list-title{float: left;color: #b0b0b0;font-size: 13px;}
+        .list-w .list-top .list-title-submit{float: right;min-width:72px;height: 34px;line-height: 34px;text-align: center;background: #e64a42;font-size: 13px;color: #fff;cursor: pointer;border:none;outline: none;}
+        .list-w .list-sep{margin:10px 20px 10px 12px;height: 2px;background: #e64a42;}
+        .list-w .list-c{}
+        .list-c .list-c-tip{padding:0 20px 0 15px;line-height: 20px;height: 20px;color: #999;font-size: 13px;}
+        .list-c .list-c-tip .list-tip-num{float:left;width: 65px;height: 100%;}
+        .list-c .list-c-tip .list-tip-name{display:block;margin:0 100px 0 65px;height: 100%;}
+        .list-c .list-c-tip .list-tip-top{float:right;margin:0 20px 0 0;width: 30px;height: 100%;text-align: center;}
+        .list-c .list-c-tip .list-tip-edit{float:right;margin:0 10px 0 0;width: 30px;height: 100%;text-align: center;}
+        .list-c .list-c-c{}
+        .list-c-c .list-item{}
+        .list-c-c .list-item.even{background:#f1f1f1}
+        .list-c-c .list-item:hover{background: #ffd1ce;}
+        .list-c-c .list-item .list-item-w{}
+        .list-c-c .list-item .list-item-c{padding:10px 20px 10px 15px;line-height: 20px;font-size: 13px;overflow: hidden;}
+        .list-item-c .list-item-num{float:left;padding:0 0 0 10px;width: 55px;height: 100%;color: #b0b0b0;}
+        .list-item-c .list-item-content{display:block;margin:0 83px 0 65px;height: 100%}
+        .list-item-c .list-item-content .list-item-name{float: left;cursor: pointer;color: #494949}
+        .list-item-c .list-item-content .list-item-opear{float: right;display: none;}
+        .list-item:hover .list-item-opear{display: block;}
+        .list-item-opear .goT{float: right;width: 12px;height: 8px;margin:6px 30px 0 0;background: url(images/icons.png) no-repeat -100px -20px;cursor: pointer;}
+        .list-item-opear .goB{float: right;width: 12px;height: 8px;margin:6px 30px 0 0;background: url(images/icons.png) no-repeat -80px -20px;cursor: pointer;}
+        .list-item-c .list-item-top{float:right;margin:2px 27px 0 0;width:16px;height: 16px;background: url(images/icons.png) no-repeat -140px 0;cursor: pointer;}
+        .list-item-c .list-item-edit{float:right;margin:2px 17px 0 7px;width: 16px;height:16px;background: url(images/icons.png) no-repeat 0 0;cursor: pointer;}
+
+
+        .m-i .m-i-c .new-w{position:absolute;top:0;right:0;bottom:0;left:0;background: #fff;overflow-y:auto;}
+        .new-w .new-c{margin:30px 0 20px 20px;max-width: 738px;}
+        .new-c .new-blog-title{}
+        .new-c .new-blog-title .new-blog-title-t{margin:0 0 8px 0;height: 20px;line-height: 20px;font-size: 13px;color: #494949}
+        .new-blog-title .new-blog-title-input{width: 400px;position: relative;}
+        .new-c .new-blog-logo{margin-top: 20px;}
+        .new-c .new-blog-logo .new-blog-logo-t{margin:0 0 8px 0;height: 20px;line-height: 20px;font-size: 13px;color: #494949}
+        .new-c .new-blog-logo .jw-form-logo-btnw{margin-top: 10px;}
+        .new-c .new-blog-logo .jw-btn3{background: #e64a42;border-color: #d2443b;color: #fff;border-radius: 0}
+        .new-c .new-blog-logo .jw-form-logo img{max-width: 100px;max-height: 100px;}
+
+        .new-c .new-blog-content{margin-top: 20px;}
+        .new-c .new-blog-content .new-blog-content-t{margin:0 0 8px 0;height: 20px;line-height: 20px;font-size: 13px;color: #494949}
+        .new-c .new-blog-content .new-blog-content-c{width:740px;min-height: 375px;border:1px solid #ddd;}
+
+
+        .m-i-c .edit-show{position: absolute;top:0;right: 450px;bottom: 0;left: 0;background: #fff;}
+        .edit-show .edit-show-w{}
+        .edit-show .edit-show-w .edit-show-c{position: absolute;top:20px;bottom: 0;right: 0;left: 0;}
+        .edit-show-c .edit-show-t{margin:0 15px;height: 30px;line-height: 30px;font-size: 14px;color: #e64a42}
+        .edit-show-c .edit-show-t .edit-show-t-txt{float: left;}
+        .edit-show-c .edit-show-t .edit-show-t-edit{float: right;margin:7px 0 0 0;width: 16px;height: 16px;background: url(images/icons.png) no-repeat 0 0;cursor: pointer;}
+
+        .edit-show-c .edit-show-main{margin:15px 15px 0;}
+        .edit-show-c .edit-show-main .edit-show-pic{margin:0 0 20px 0;width: 100%;}
+        .edit-show-c .edit-show-main .edit-show-pic img{max-width: 100%;}
+        .edit-show-c .edit-show-main .edit-show-info{overflow: hidden;}
+        .edit-show-main .edit-show-info span{float: left;margin:0 5px 0 0;font-size: 13px;color: #b0b0b0}
+        .edit-show-main .edit-show-info span.specail{margin-right:15px;color: #494949}
+        .edit-show-main .edit-show-name{margin-top:10px;font-size: 20px;color: #999;}
+        .edit-show-main .edit-show-content{margin-top: 15px;}
+        .edit-show-main .edit-show-content p{margin:10px 0 0 0;line-height: 25px;}
+        .edit-show-main .edit-show-content p:first-child{margin-top: 0;}
+
+        .m-i-c .edit-info{position: absolute;top:0;right: 0;bottom: 0;width: 400px;background: #fff;}
+        .edit-info .edit-info-w{}
+        .edit-info .edit-info-w .edit-info-c{position: absolute;top:20px;bottom: 0;right: 0;left: 0;}
+        .edit-info-c .edit-status{margin:0 15px;height: 30px;line-height: 30px;font-size:14px;color: #999}
+        .edit-info-c .edit-status span{color: #e64a42}
+        .edit-info-c .edit-sep{margin:10px 12px;height: 1px;background: #ddd;}
+        .edit-info-c .edit-items .edit-item{margin:25px 15px 0;}
+        .edit-info-c .edit-items .edit-item:first-child{margin-top:0;}
+        .edit-items .edit-item .edit-item-title{margin:0 0 10px 0;font-size: 14px;color: #999;}
+        .edit-items .edit-item .edit-item-c{}
+        .edit-item-c .edit-opear{height: 30px;line-height: 30px;}
+        .edit-item-c .edit-opear .edit-select{float: left;margin:3px 15px 0 0;min-width: 100px;}
+        .edit-opear .edit-select .cmb-w{line-height: 24px;height: 24px;border-radius: 0;background: #f4f4f4;border-color: #e7e7e7}
+        .edit-opear .edit-select .cmb-btn{width:10px;line-height: 24px;border-left: 0;height: 24px;}
+        .edit-opear .edit-select .cmb-tw{line-height: 24px;padding-left: 10px;margin-right: 25px;}
+        .edit-opear .edit-select .cmb-btn-i{top:10px;right: 10px}
+        .edit-item-c .edit-opear .edit-input{float: left;margin:0 15px 0 0;min-width: 250px;}
+        .edit-opear .edit-input .input-w-s .input-co{margin:0 8px;}
+        .edit-item-c .edit-opear .edit-item-submit{float: left;height: 24px;line-height: 24px;color: #fff;margin:3px 0 0 0;padding:0 10px;min-width: 70px;text-align: center;background: #e64a42;border: none;outline: none;}
+        .edit-item-c .edit-opear .edit-item-submit[disabled]{opacity: 0.7}
+
+        .edit-item-c .edit-creator{margin:0 0 10px 0;overflow: hidden;max-width: 300px;}
+        .edit-creator .edit-creator-logo{width: 50px;height: 50px;float: left;}
+        .edit-creator .edit-creator-logo img{max-width: 100%;max-height: 100%}
+        .edit-creator .edit-creator-info{display: block;margin:0 0 0 70px;font-size: 13px;color: #999}
+        .edit-creator .edit-creator-info .edit-creator-name{margin-top:-4px;line-height: 18px;color: #e64a42;}
+        .edit-creator .edit-creator-info .edit-creator-title{line-height: 20px;}
+
+        {}
+    </style>
+</head>
+<!-- <div class="m-i new hide">
+    </div>
+    <div class="m-i edit hide">
+        <div class="m-i-t">
+            <div class="m-i-ico-c">
+                <div class="m-i-ico"></div>
+            </div>
+            <div class="m-i-t-opear">
+                <div class="m-i-t-opear-i active">编辑博客</div>
+            </div>
+            <div class="m-i-t-b">
+                <button type="button" class="edit-submit-btn">发表</button>
+                <button type="button" class="edit-save-btn">保存</button>
+                <button type="button" class="edit-cancel-btn">放弃</button>
+            </div>
+        </div>
+        <div class="m-i-c">
+            <div class="edit-show">
+                <div class="edit-show-w">
+                    <div class="edit-show-c">
+                        <div class="edit-show-t">
+                            <div class="edit-show-t-txt">展示样式</div>
+                            <div class="edit-show-t-edit"></div>
+                        </div>
+                        <div class="edit-show-main">
+                            <div class="edit-show-pic">
+                                <img src="images/list-demo.jpg">
+                            </div>
+                            <div class="edit-show-info">
+                                <span>by</span>
+                                <span class="specail">Michael Lee</span>
+                                <span>2014年8月9日</span>
+                            </div>
+                            <div class="edit-show-name">2011企业社会化软件使用现状</div>
+                            <div class="edit-show-content">
+                                <p>2011年的最后一天，我们为大家整理了这份信息图。该图数据来自xxxx第5次关于社会化技术在企业使用状况的调研。经过对全球4200名企业高管的访问，发现72%的企业至少不熟了一种社会化技术，这些新技术和工作正在帮助企业转变业务流程，提升写作和生产能力。</p>
+                                <p>经过几年的发展，企业正在提升他们对社会化技术的驾驭力。全球各行业部署了企业社会化软件的高管一致认为。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="edit-info">
+                <div class="edit-info-w">
+                    <div class="edit-info-c">
+                        <div class="edit-status">状态：<span>未发表</span></div>
+                        <div class="edit-sep"></div>
+                        <div class="edit-items">
+                            <div class="edit-item creator">
+                                <div class="edit-item-title">作者</div>
+                                <div class="edit-item-c">
+                                    <div class="edit-creator">
+                                        <div class="edit-creator-logo">
+                                            <img src="images/l.jpg">
+                                        </div>
+                                        <div class="edit-creator-info">
+                                            <div class="edit-creator-name">Michael Lee</div>
+                                            <div class="edit-creator-title">Joywok市场总监，专注于社会化商业研究和实践</div>
+                                        </div>
+                                    </div>
+                                    <div class="edit-opear">
+                                        <div class="edit-select"></div>
+                                        <button type="button" class="edit-item-submit">提交</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+<body>
+    <div class="blog-main">
+        <div class="blog-w">
+            <div class="blog-c">
+                <div class="sidbar">
+                    
+                </div>
+                <div class="main">
+                    <div class="main-w">
+                        <div class="main-c">
+                            
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript" src="scripts/app.js"></script>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "console",
+  "version": "1.0.0",
+  "description": "博客",
+  "main": "/app/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "browser-sync": "^1.7.2",
+    "del": "^0.1.3"
+  }
+}

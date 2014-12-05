@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html ng-app="myApp">
+<head>
+<title></title>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../bower_components/bootstrap/dist/css/bootstrap.min.css" />
+<script src="../bower_components/jquery/dist/jquery.js"></script>
+<script src="../bower_components/underscore/underscore.js"></script>
+<style type="text/css">
+	*{margin:0;padding: 0;}
+
+	html{height: 100%}
+	a{text-decoration: none}
+	a:hover,a:focus{text-decoration: none;color: #4174d9}
+	input{width: 100%;height: 100%;padding:0 10px;border:1px solid #e3e3e3;border-top-color:#ccc;border-radius: 0px;-webkit-appearance: none;box-shadow:none;font-size: 14px;height:38px;line-height: 19px;}
+	input:focus{box-shadow: 0 1px 2px rgba(0,0,0,0.1)inset;-webkit-box-shadow: 0 1px 2px rgba(0,0,0,0.1)inset;border:1px solid #444444;outline: none}
+	input.haserror{border:1px solid #bf0404;}
+	.form-control{height: 100%;border-radius: 0px!important;font-size: 14px;}
+	button{outline: none;}
+	button:disabled{opacity: 0.7}
+
+	body{position: relative;height: 100%;font-family: '微软雅黑', Arial, sans-serif;}
+	.blog{position: relative;height: 100%;min-height: 700px;}
+	.blog .blog-w{}
+	.blog .blog-w .blog-c{position: absolute;top:0;left: 0;right: 0;bottom: 0;}
+	.blog-c .login-bg{position:absolute;top:0;left:0;right:0;bottom:0;}
+	.login-bg .login-bg-t{width: 100%;height: 33.333333%;background: #e64a42;min-height: 320px;}
+	.login-bg .login-bg-b{width: 100%;height: 66.6666666%;background: #f7f7f7;min-height: 550px;}
+
+	.login{position:relative;z-index:2;margin:220px auto 0;width: 500px;}
+	.login .login-w{}
+	.login .login-w .login-t{margin:0 0 20px;height: 38px;text-align: center;}
+	.login .login-w .login-t img{display: inline-block;}
+	.login .login-w .login-t span{display: inline-block;vertical-align: bottom;margin-bottom: 5px;font-size: 14px;color: #ddd;}
+	.login .login-w .login-c{overflow: hidden;width: 500px;background: #fff;}
+
+	.login-logo{margin:20px auto;width: 100px;height: 100px;border-radius: 100px;overflow: hidden;}
+	.login-logo img{max-width: 100%;max-height: 100%}
+
+	.login-c .login-info-name{}
+
+	.login-c .login-info{width: 320px;margin:0 auto;}
+
+	.login-c .login-user{margin:0 auto 22px;width:100%px;font-size: 18px;color: #999}
+	.login-user .login-user-input{}
+	.login-user .login-user-input .email{color: #444}
+	.login-user .login-user-input .login-user-input-c{}
+	.login-user .login-user-error{margin: 5px 0 -8px;width: 100%;height: 20px;line-height: 20px;text-align: center;color: #bf0404;text-align: left;font-size: 13px;}
+	.login-c .login-passwd{margin:0 auto;width: 100%;font-size: 18px;color: #999}
+	.login-c .login-passwd{}
+	.login-passwd .login-passwd-input{}
+	.login-passwd .login-passwd-input .passwd{color: #444}
+	.login-passwd .login-passwd-error{margin:5px 0 -8px;width: 100%;height: 20px;line-height: 20px;color: #bf0404;text-align: left;font-size: 13px;}
+
+	.login-info .login-save-btn{display: block;margin: 22px auto 0;width:100%;height: 38px;background: #444!important;font-size: 14px;border-radius: 3px;box-shadow: none;border: none;border: #fff;}
+
+	.login-info .login-forget{text-align: center;margin:20px 0;color:#b0b0b0;}
+
+	.footer{position: absolute;bottom:30px;left:0;right:0;text-align: center;color: #b0b0b0}
+</style>
+</head>
+<body>
+	<div class="blog" ng-controller="login">
+		<div class="blog-w">
+			<div class="blog-c">
+				<div class="login-bg">
+					<div class="login-bg-t"></div>
+					<div class="login-bg-b"></div>
+				</div>
+				<div class="login">
+					<div class="login-w">
+						<div class="login-t">
+							<img src="images/logo.png">
+							<span>管理后台</span>
+						</div>
+						<div class="login-c">
+							<div class="login-logo">
+								<img src="images/l.jpg">
+							</div>
+							<div class="login-info">
+								<div class="login-info-name" ng-hide="data['nameShow']" ng-bind='data["name"]'></div>
+								<div class="login-user">
+									<div class="login-user-input">
+										<input type="text" class="email" id="exampleInputEmail1" placeholder="邮箱/手机号" ng-model ="data['email']" ng-hide="!data['nameShow']" ng-change="inputChange()" style="ime-mode:active" ng-class="data['nameHasError']" ng-keyup="inputKp($event)">
+			                     <div class="login-user-input-c" ng-bind="data['email']" ng-hide="data['nameShow']"></div>
+									</div>
+									<div class='login-user-error' ng-hide="data['nameError']">用户名不存在</div>
+								</div>
+								<div class="login-passwd">
+									<div class="login-passwd-input">
+										<input type="password" class="passwd " id="exampleInputEmail1" placeholder="密码" ng-model = "data['passwd']" ng-keyup="passwdChange($event)" ng-class="data['passwdHasError']" >
+			                     <div class="ie-tip" style="display:none">密码</div>
+									</div>
+									<div class="login-passwd-error" ng-hide="data['passwdError']">密码错误</div>
+								</div>
+								<button type="button" class="btn btn-info active login-save-btn" ng-disabled="data['isdis']" ng-click = 'submit()' ng-bind="data['loginVal']">登录</button>
+								<a href=""><div class="login-forget" ng-class="data['nameClass']">忘记密码?</div></a>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="footer">© 2011-2014 道勤软件 版权所有</div>
+			</div>
+		</div>
+	</div>
+</body>
+<script type="text/javascript" src="scripts/main.js"></script>
+<script src="../bower_components/angular/angular.js"></script>
+<script type="text/javascript">
+	var myApp = angular.module('myApp',[],function(){});
+	var store = new Store('Joywok:saas:login')
+	myApp.factory('Data',function(){
+      var cache = store.find({id:'login'});
+      return {
+      	logo:'images/l.jpg',
+         name:cache&&cache['id']?cache['name']:'',
+         nameShow:cache&&cache['id']?false:true,
+         nameClass:cache&&cache['id']?'show':'',
+         email:cache&&cache['id']?cache["email"]:'',
+         emailDis:true,
+         passwd:'',
+         nameError:true,
+         nameHasError:'',
+         passwdError:true,
+         passwdHasError:'',
+         isdis:true,
+         loginVal:'登录'
+      }
+    })
+	myApp.controller('login',function($scope,$http,Data){
+		$scope.data = Data;
+		if(!$.support.placeholder){
+            if($scope["data"]["email"] == '') $scope["data"]["email"] = '邮箱/手机号'
+            $('.ie-tip').css({display:'block'})
+            $('.email').css({color:'#b0b0b0'})
+            $('.email').bind('focus',function(){
+                if($scope["data"]["email"]!='' && $scope["data"]["email"]!='邮箱/手机号'){
+                    $('.email').css({color:'#494949'})
+                }else{
+                    $('.email').css({color:'#494949'})
+                    $scope["data"]["email"] = ''
+                    $scope.$apply()
+                }
+            }).bind('blur',function(){
+                if($scope["data"]["email"]!='' && $scope["data"]["email"]!='邮箱/手机号'){
+                    $('.email').css({color:'#494949'});
+                }else{
+                    $('.email').css({color:'#b0b0b0'})
+                    $scope["data"]["email"]='邮箱/手机号';
+                    $scope.$apply()
+                }
+            })
+            $('.ie-tip').click(function(){
+                $(this).css({display:'none'});
+                $('.passwd').focus()
+            })
+            $('.passwd').bind('focus',function(){
+                $('.ie-tip').css({display:'none'})
+            }).bind('blur',function(){
+                if($scope['data']["passwd"] == ''){
+                     $('.ie-tip').css({display:'block'})
+                }
+            })
+        }
+        $scope.$watch('data["email"] + data["passwd"]',function(new_data,old_date){
+            if($scope['data']['passwd'].length!=0){
+                $scope['data']['isdis'] = false;
+            }else{
+                $scope['data']['isdis'] = true;
+            }
+        })
+        $scope.inputChange = function(evt){
+            $scope['data']['nameError'] = true;
+            $scope["data"]["nameHasError"] = ''
+        }
+        $scope.inputKp = function(evt){
+            if(evt.keyCode == 13){
+                $('.passwd').focus()
+            }
+        }
+        $scope.passwdChange = function(evt){
+        	$scope["data"]['passwdError'] = true
+            $scope["data"]["passwdHasError"] = ''
+            if(evt.keyCode == 13 || (evt.keyCode == 13 && evt.ctrlKey )){
+                $scope.submit()
+            }
+        }
+
+        $scope.submit = function(){
+            $scope['data']['isdis'] = true
+            $scope['data']['loginVal']= '登录中…'
+            $http.post('/siteconsole/login/post',{
+            	data:{"email":"zhailei@dogesoft.cn","pname":"zhailei"}
+            }).success(function(data){
+            	if(data["ret"] == 'error'){
+					if(data['ret']['code'] == 'jw_reg_nouser'){
+						$scope['data']['nameError'] = false;
+						$scope['data']['nameHasError'] = true;
+					}else{
+						$scope['data']['passwdError'] = false;
+						$scope['data']['passwdHasError'] = true;
+					}
+            	}else{
+            		window.location.href = '/list'
+            	}
+            })
+        }
+
+	})
+</script>
+</html>

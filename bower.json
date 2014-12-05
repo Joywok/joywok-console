@@ -1,0 +1,29 @@
+{
+  "name": "console",
+  "version": "0.0.0",
+  "authors": [
+    "zhailei <zhailei@dogesoft.cn>"
+  ],
+  "description": "博客",
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "bootstrap": "~3.3.1",
+    "jquery": "~2.1.1",
+    "underscore": "~1.7.0",
+    "backbone": "~1.1.2"
+  },
+  "dependencies": {
+    "angular": "~1.3.4"
+  }
+}
