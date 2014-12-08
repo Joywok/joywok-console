@@ -1,106 +1,35 @@
 $(function(){
 
-  var data = [
-    {
-      id:'1',
-      name:'1',
-      avatar:'images/list-demo.jpg',
-      content:'111111',
-      isCollage:true
-    },
-    {
-      id:'2',
-      name:'2',
-      avatar:'images/list-demo.jpg',
-      content:'222222'
-    },
-    {
-      id:'3',
-      name:'3',
-      avatar:'images/list-demo.jpg',
-      content:'333333'
-    },
-    {
-      id:'4',
-      name:'4',
-      avatar:'images/list-demo.jpg',
-      content:'444444'
-    }
-  ]
+  console.log(basurl,data)
 
+  var SrcFolder = basurl + "/console/app/"
 
 	var blog = {};
+
+
+  blog.setting = Backbone.View.extend({
+    initialize:function(options){
+      var self = this;
+      _.extend(this,options);
+      this.$el = $('<div class="m-i setting"></div>');
+      this.parentEl.append(this.$el);
+      this._init_main();
+    },
+    _init_main:function(){
+    }
+  })
 
 	blog.sidbar = Backbone.View.extend({
 		events:{
 			'click .nav-item':'changTab',
-			'click .opear-setting':'setting',
-			'click .opear-exit':'exit'
+			'click .opear-setting':'setting'
 		},
 		initialize:function(options){
 			var self = this;
 			_.extend(this,options);
 			_.bindAll(this,'changTab');
-			this._init_main();
 			this._init_name();
-		},
-		_init_main:function(){
-			this.$el.html('<div class="sidbar-w">\
-									<div class="sidbar-c">\
-                            <div class="user">\
-                                <div class="user-logo">\
-                                    <img src="images/l.jpg" alt=""/>\
-                                </div>\
-                                <div class="user-name">翟磊</div>\
-                            </div>\
-                            <div class="nav">\
-                                <div class="nav-w">\
-                                    <div class="nav-c">\
-                                        <div class="nav-item blog active" action-type="blog">\
-                                            <div class="nav-item-c">\
-                                                <div class="nav-ico-c">\
-                                                    <div class="nav-ico"></div>\
-                                                </div>\
-                                                <div class="nav-txt">博客</div>\
-                                            </div>\
-                                        </div>\
-                                        <div class="nav-item activity" action-type="activity">\
-                                            <div class="nav-item-c">\
-                                                <div class="nav-ico-c">\
-                                                    <div class="nav-ico"></div>\
-                                                </div>\
-                                                <div class="nav-txt">活动</div>\
-                                            </div>\
-                                        </div>\
-                                        <div class="nav-item data" action-type="data">\
-                                            <div class="nav-item-c">\
-                                                <div class="nav-ico-c">\
-                                                    <div class="nav-ico"></div>\
-                                                </div>\
-                                                <div class="nav-txt">统计数据</div>\
-                                            </div>\
-                                        </div>\
-                                        <div class="nav-item manage" action-type="manage">\
-                                            <div class="nav-item-c">\
-                                                <div class="nav-ico-c">\
-                                                    <div class="nav-ico"></div>\
-                                                </div>\
-                                                <div class="nav-txt">企业管理</div>\
-                                            </div>\
-                                        </div>\
-                                    </div>\
-                                </div>\
-                            </div>\
-                        </div>\
-                       </div>\
-                       <div class="opear">\
-	                        <div class="opear-setting">\
-	                            <div class="ico"></div>\
-	                        </div>\
-	                        <div class="opear-exit">\
-	                            <div class="ico"></div>\
-	                        </div>\
-	                    </div>');
+      this.setting();
 		},
 		_init_name:function(){
 			this.nav_item = this.$el.find('.nav-item')
@@ -112,10 +41,9 @@ $(function(){
 			this.trigger('tab:change',target.attr("action-type"))
 		},
 		setting:function(){
-
-		},
-		exit:function(){
-
+      this.setting = new blog.setting({
+        parentEl:$('.main-c')
+      })
 		}
 	})
 
@@ -151,7 +79,7 @@ $(function(){
                             <div class="list-item-edit"></div>\
                             <div class="list-item-top '+(this.model.get("isCollage")&&this.model.get("isCollage")!=''?'active':'')+'" model-id="'+this.model.get("id")+'"></div>\
                             <div class="list-item-content">\
-                                <div class="list-item-name">'+this.model.get("name")+'</div>\
+                                <div class="list-item-name">'+this.model.get("title")+'</div>\
                                 <div class="list-item-opear">\
                                     <div class="goB"></div>\
                                     <div class="goT"></div>\
@@ -212,7 +140,7 @@ $(function(){
                                       <div class="list-show-item-w">\
                                           <div class="list-show-item-c">\
                                               <div class="list-show-item-imgc">\
-                                                  <img src="images/list-demo.jpg"/>\
+                                                  <img src="'+SrcFolder+'images/list-demo.jpg"/>\
                                                   <div class="list-show-item-tag">Futuer of Work</div>\
                                               </div>\
                                               <div class="list-show-item-name">Forrester:企业社会化软件市场2016年将达64亿美金</div>\
@@ -227,7 +155,7 @@ $(function(){
                                       <div class="list-show-item-w">\
                                           <div class="list-show-item-c">\
                                               <div class="list-show-item-imgc">\
-                                                  <img src="images/list-demo.jpg"/>\
+                                                  <img src="'+SrcFolder+'images/list-demo.jpg"/>\
                                                   <div class="list-show-item-tag">Futuer of Work</div>\
                                               </div>\
                                               <div class="list-show-item-name">Forrester:企业社会化软件市场2016年将达64亿美金</div>\
@@ -306,7 +234,7 @@ $(function(){
 
 	blog.new_blog_m = Backbone.Model.extend({
 		defaults:{
-			logo:'images/list-demo.jpg',
+			logo:SrcFolder+'images/list-demo.jpg',
 			content:''
 		}
 	})
@@ -386,7 +314,7 @@ $(function(){
             el:this.$el.find('.new-blog-logo-c'),
             name:'logo',
             model:this.model,
-            action:'images/list-demo.jpg',
+            action:SrcFolder+'images/list-demo.jpg',
             imgType:1
          })
          this.content = new jw.editor({
@@ -485,7 +413,7 @@ $(function(){
 					                                <div class="edit-item-c">\
 					                                    <div class="edit-creator">\
 					                                        <div class="edit-creator-logo">\
-					                                            <img src="images/l.jpg">\
+					                                            <img src="'+SrcFolder+'images/l.jpg">\
 					                                        </div>\
 					                                        <div class="edit-creator-info">\
 					                                            <div class="edit-creator-name">Michael Lee</div>\
@@ -563,7 +491,7 @@ $(function(){
 		},
 		_init_show:function(){
 			this.show_c.html('<div class="edit-show-pic">\
-                                <img src="images/list-demo.jpg">\
+                                <img src="'+SrcFolder+'images/list-demo.jpg">\
                             </div>\
                             <div class="edit-show-info">\
                                 <span>by</span>\
