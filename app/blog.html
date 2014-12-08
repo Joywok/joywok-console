@@ -60,6 +60,11 @@
         .main-c .m-i{position: absolute;top:0;left:0;right:0;bottom:0;background: #f7f7f7}
         .m-i .m-i-t{position:absolute;top:0;left:0;right:0;height: 60px;}
         .m-i-t .m-i-ico-c{float:left;width:53px;height:100%;background:#666;}
+        .m-i-t .m-i-ico-c .m-i-ico{background: url(images/icons.png) no-repeat;}
+        .m-i.list .m-i-ico{margin:18px auto 0;width: 17px;height: 24px;background-position: -20px 0;}
+        .m-i.new .m-i-ico{margin: 22px auto 0;width: 16px;height: 16px;background-position: 0 -20px;}
+        .m-i.edit .m-i-ico{margin: 22px auto 0;width: 16px;height: 16px;background-position: 0 -20px;}
+
         .m-i-t .m-i-t-opear{float:left;margin:0 0 0 20px;}
         .m-i-t .m-i-t-opear .m-i-t-opear-i{float: left;margin:0 0 0 35px;line-height: 60px;color: #b0b0b0;cursor: pointer}
         .m-i-t .m-i-t-opear .m-i-t-opear-i:first-child{margin-left: 0;}
@@ -118,7 +123,11 @@
         .list-item-opear .goT{float: right;width: 12px;height: 8px;margin:6px 30px 0 0;background: url(images/icons.png) no-repeat -100px -20px;cursor: pointer;}
         .list-item-opear .goB{float: right;width: 12px;height: 8px;margin:6px 30px 0 0;background: url(images/icons.png) no-repeat -80px -20px;cursor: pointer;}
         .list-item-c .list-item-top{float:right;margin:2px 27px 0 0;width:16px;height: 16px;background: url(images/icons.png) no-repeat -140px 0;cursor: pointer;}
+        .list-item-c .list-item-top.active{background-position: -160px 0;cursor: default;}
         .list-item-c .list-item-edit{float:right;margin:2px 17px 0 7px;width: 16px;height:16px;background: url(images/icons.png) no-repeat 0 0;cursor: pointer;}
+
+        .list-item.noGoT .list-item-opear .goT{display: none;}
+        .list-item.noGoB .list-item-opear .goB{display: none;}
 
 
         .m-i .m-i-c .new-w{position:absolute;top:0;right:0;bottom:0;left:0;background: #fff;overflow-y:auto;}

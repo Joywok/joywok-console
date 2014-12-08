@@ -1,5 +1,34 @@
 $(function(){
 
+  var data = [
+    {
+      id:'1',
+      name:'1',
+      avatar:'images/list-demo.jpg',
+      content:'111111',
+      isCollage:true
+    },
+    {
+      id:'2',
+      name:'2',
+      avatar:'images/list-demo.jpg',
+      content:'222222'
+    },
+    {
+      id:'3',
+      name:'3',
+      avatar:'images/list-demo.jpg',
+      content:'333333'
+    },
+    {
+      id:'4',
+      name:'4',
+      avatar:'images/list-demo.jpg',
+      content:'444444'
+    }
+  ]
+
+
 	var blog = {};
 
 	blog.sidbar = Backbone.View.extend({
@@ -11,7 +40,7 @@ $(function(){
 		initialize:function(options){
 			var self = this;
 			_.extend(this,options);
-			_.bindAll(this,'changTab')
+			_.bindAll(this,'changTab');
 			this._init_main();
 			this._init_name();
 		},
@@ -90,6 +119,49 @@ $(function(){
 		}
 	})
 
+
+  blog.list_item_view = Backbone.View.extend({
+    className:'list-item',
+    initialize:function(){
+      var self = this;
+      this.model.bind('change:isCollage',function(){
+
+        if(this.get('isCollage')&&this.get('isCollage')!="") self.$el.find('.list-item-top').addClass('active')
+        else{
+          self.$el.find('.list-item-top').removeClass('active')
+        }
+
+      })
+    },
+    render:function(){
+      var index = this.model.collection.indexOf(this.model);
+      if(index%2 == 1){
+        this.$el.addClass('even')
+      }
+      if(index == 0){
+        this.$el.addClass('noGoT')
+      }else{
+        if(index == this.model.collection.length-1){
+          this.$el.addClass('noGoB')
+        }
+      }
+      this.$el.html('<div class="list-item-w">\
+                        <div class="list-item-c">\
+                            <div class="list-item-num">'+index+'</div>\
+                            <div class="list-item-edit"></div>\
+                            <div class="list-item-top '+(this.model.get("isCollage")&&this.model.get("isCollage")!=''?'active':'')+'" model-id="'+this.model.get("id")+'"></div>\
+                            <div class="list-item-content">\
+                                <div class="list-item-name">'+this.model.get("name")+'</div>\
+                                <div class="list-item-opear">\
+                                    <div class="goB"></div>\
+                                    <div class="goT"></div>\
+                                </div>\
+                            </div>\
+                        </div>\
+                    </div>');
+      return this;
+    }
+  })
 	blog.list_model = Backbone.Model.extend({})
 	blog.list_collection = Backbone.Collection.extend({
 		mode:blog.list_model,
@@ -104,16 +176,19 @@ $(function(){
 	blog.list = Backbone.View.extend({
 		events:{
 			'click .m-i-t-opear-i':'changTab',
-			'click .new-blog':'newBlog'
+			'click .new-blog':'newBlog',
+      'click .list-item-top':'setCollage'
 		},
 		initialize:function(options){
 			var self = this;
 			_.extend(this,options);
-			this.collection = new blog.list_collection();
+			this.collection = new blog.list_collection(this.data);
 			this.$el = $('<div class="m-i list"></div>');
 			this.parentEl.append(this.$el);
 			this._init_main();
 			this._init_name();
+      this.bindEvt();
+      this.addAll();
 		},
 		_init_main:function(){
 			this.$el.html('<div class="m-i-t">\
@@ -178,22 +253,6 @@ $(function(){
                                           <div class="list-tip-name">博文名称</div>\
                                       </div>\
                                       <div class="list-c-c">\
-                                          <div class="list-item">\
-                                              <div class="list-item-w">\
-                                                  <div class="list-item-c">\
-                                                      <div class="list-item-num">1</div>\
-                                                      <div class="list-item-edit"></div>\
-                                                      <div class="list-item-top"></div>\
-                                                      <div class="list-item-content">\
-                                                          <div class="list-item-name">企业软件，以社交之名</div>\
-                                                          <div class="list-item-opear">\
-                                                              <div class="goB"></div>\
-                                                              <div class="goT"></div>\
-                                                          </div>\
-                                                      </div>\
-                                                  </div>\
-                                              </div>\
-                                          </div>\
                                       </div>\
                                   </div>\
                               </div>\
@@ -202,7 +261,15 @@ $(function(){
 		_init_name:function(){
 			this.container = this.$el.find('.list-c-c');
 			this.tabs_item = this.$el.find('.m-i-t-opear-i');
+
+      this.collages = this.$el.find('.list-item-top');
+
 		},
+    bindEvt:function(){
+      _.bindAll(this,'addOne','addAll');
+      this.collection.bind('add',this.addOne);
+      this.collection.bind('reset',this.addAll);
+    },
 		addOne:function(model){
 			var view = new blog.list_item_view({model:model})
 			this.container.append(view.render().el)
@@ -224,7 +291,17 @@ $(function(){
 		newBlog:function(evt){
 			this.trigger('new-blog');
 			evt.stopPropagation();
-		}
+		},
+    setCollage:function(evt){
+      var target = $(evt.currentTarget);
+      var model = this.collection.get(target.attr('model-id'));
+
+      _.each(this.collection.models,function(item){
+        item.set({isCollage:false})
+      })
+
+      model.set({isCollage:true})
+    }
 	})
 
 	blog.new_blog_m = Backbone.Model.extend({
@@ -624,7 +701,8 @@ $(function(){
 		_init_list:function(){
 			var self = this;
 			this.list = new blog.list({
-				parentEl:this.$el.find('.main-c')
+				parentEl:this.$el.find('.main-c'),
+        data:this.data
 			})
 			this.list.bind('new-blog',function(){
 				$.publish('newBlog')
@@ -633,7 +711,8 @@ $(function(){
 	})
 
 	new blog.console({
-		el:$('.blog-main')
+		el:$('.blog-main'),
+    data:data
 	})
 
 })

@@ -33,4 +33,5 @@ gulp.task("serve",function(){
   	});
 	gulp.watch(['app/*.html'],reload);
 	gulp.watch(['app/scripts/**/*.js'],reload);
+	gulp.watch(['app/images/**/*'],reload);
 })
