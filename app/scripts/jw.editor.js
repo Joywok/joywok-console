@@ -46,7 +46,7 @@ body{'+(window.getSelection?'overflow-x:hidden;overflow-y:auto;':'')+'font-size:
 body:hover::-webkit-scrollbar-thumb{background-color:rgba(0, 0, 0, 0.5);}\
 .tmp{max-width:100%;}';
 		this.wysiwyg.document.open();
-		this.wysiwyg.document.writeln('<html><style>'+str+'</style><script src="/public/scripts/jquery.js"></script><body id="editContent" contenteditable="true" designMode="on" spellcheck="false">'+this.model.get(this.options.editKey)+'</body></html>');
+		this.wysiwyg.document.writeln('<html><style>'+str+'</style><script src="'+SrcFolder+'/public/scripts/jquery.js"></script><body id="editContent" contenteditable="true" designMode="on" spellcheck="false">'+this.model.get(this.options.editKey)+'</body></html>');
 		this.wysiwyg.document.close();
 // return;
 		var that = this;

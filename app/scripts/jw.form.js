@@ -437,6 +437,7 @@ jw.Form.logo=Backbone.View.extend({
 		// _.extend(this,options);
 		this.imgType = options['imgType'];
 		this.actionUrl = basurl+'/file/uplogo';
+		this.blogid = options['blogid']
 		if(options['action']) this.actionUrl = options["action"]
 		if(options.model.get(this.name) != ''){
 			this._default=options.model.get(this.name);
@@ -452,6 +453,7 @@ jw.Form.logo=Backbone.View.extend({
 			element:this.el,
 			uploadBtn:$(this.el).find('button')[0],
 			action:this.actionUrl,
+			blogid:this.blogid,
 			multiple:false,
 			allowFiletypes:['jpg','jpeg','png','bmp','gif'],
 			onSubmit:this._onSubmit,
