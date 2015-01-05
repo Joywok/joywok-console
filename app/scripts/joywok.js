@@ -2684,17 +2684,17 @@ jw.SocialObjs=Backbone.Collection.extend({
  */
 jw.SocialObjList=jw.FD.extend({
 	initialize:function(options){
+		var self = this;
 		this._action=options.action||'';
 		var params = {action:this._action};
 		if( options.app ){
 			params.app_type = options.app.app_type;
 			params.app_id = options.app.app_id;
-		}0
+		}
 
 		this._socialobjs=new jw.SocialObjs( params );
 		_.bindAll(this, 'update','_combineOne');
-		this._socialobjs.bind('reset', this.update);
-		
+		this._socialobjs.bind('reset',this.update);
 		_.extend(options,{
 			inittype:1,
 			CloseOnEscape:true,
@@ -2749,7 +2749,6 @@ jw.SocialObjList=jw.FD.extend({
 	// SocialObjs 数据更新，更新下拉列表内容
 	update:function(){
 		// trace('update action['+this._socialobjs.action+']')
-		console.log('xxxx');
 		this.objlist=this._socialobjs.toJSON();
 		this._objw.empty();
 		this._ClassifyObjs();
@@ -4454,7 +4453,6 @@ jw.ComplexShare=jw.Combobox.extend({
  */
 jw.taginput=jw.BaseShare.extend({
 	getObjs:function(str){
-		console.log('这里走了么')
 		this._SearchStr=str;
 		if(str===''){
 			// 如果为空，则隐藏下拉列表
@@ -4469,7 +4467,6 @@ jw.taginput=jw.BaseShare.extend({
 		this._objw.append('<div class="jw-obj jw-obj-topic" action-data="'+tag.id+'"><div class="jwobj-w"><div class="jw-obj-topicnum">0</div><div class="jwobj-name"># '+tag.name+'</div></div></div>');
 	},
 	_combineList:function(){
-		console.log(this.objlist,'xxxx')
 		if(this.objlist.length>0){
 			// 先判断列表中是否包含用户输入的标签
 			var tagobj = _.findWhere( this.classes_objs['jw_n_tag'], {name:this._SearchStr});

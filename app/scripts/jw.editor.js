@@ -37,20 +37,27 @@ jw.editor = Backbone.View.extend({
      	var str = '.reply_content_tip{font-size: 13px; color: #808080; } .reply_content_tip strong{color: #4174d9; text-decoration: underline; }\
 .reply_content_source{padding: 10px 0px 10px 10px; border-left: 1px solid #b0b0b0; margin: 5px 0px 0px; }\
 .reply_content_showmore{margin: 5px 0 12px; -webkit-user-select:none; -moz-user-select:none;}\
-.reply_content_showmore i{display: block; width: 30px; height: 20px; background: url(/public/images/icons_mail.png) -99px -57px no-repeat; cursor: pointer;}\
+.reply_content_showmore i{display: block; width: 30px; height: 20px; background: url('+SrcFolder+'/public/images/icons_mail.png) -99px -57px no-repeat; cursor: pointer;}\
 .reply_content_showmore i:hover{background-position: -99px -37px;}\
 '+ (window.getSelection?'html{overflow:hidden;} body{height:100%;}':'') +'\
 ::-webkit-scrollbar{width:8px;-webkit-border-radius:15px;} \
 ::-webkit-scrollbar-thumb{background-color:rgba(0, 0, 0, 0.2);-webkit-border-radius:15px;} \
-body{'+(window.getSelection?'overflow-x:hidden;overflow-y:auto;':'')+'font-size:14px; margin:0;font-family:arial;word-break:break-all;}\
+body{'+(window.getSelection?'overflow-x:hidden;overflow-y:auto;':'')+'font-size:14px; margin:10px; margin-right:0; font-family:arial;word-break:break-all;}\
 body:hover::-webkit-scrollbar-thumb{background-color:rgba(0, 0, 0, 0.5);}\
 .tmp{max-width:100%;}';
+
+		if(this.options['styles']) str+= this.options['styles'];
+
+		console.log(str)
+
 		this.wysiwyg.document.open();
 		this.wysiwyg.document.writeln('<html><style>'+str+'</style><script src="'+SrcFolder+'/public/scripts/jquery.js"></script><body id="editContent" contenteditable="true" designMode="on" spellcheck="false">'+this.model.get(this.options.editKey)+'</body></html>');
 		this.wysiwyg.document.close();
-// return;
 		var that = this;
+
 		this.heightTimer = false;
+
+		var keyupTimer = false;
 		$(this.wysiwyg.document).bind('keydown', function(evt){
 			evt.stopPropagation();
 			if(evt.ctrlKey && evt.keyCode==13){
@@ -60,20 +67,23 @@ body:hover::-webkit-scrollbar-thumb{background-color:rgba(0, 0, 0, 0.5);}\
 			}
 			if(evt.keyCode==13) that.wysiwyg.document.execCommand('formatBlock', false,'<div>');
 		}).bind('keyup', function(){
-			that.model.set(that.options.editKey, that.wysiwyg.document.body.innerHTML);
-			if(that.options.adaptHeight>0){
+			if(keyupTimer) clearTimeout(keyupTimer);
+			keyupTimer = setTimeout(function(){
+				that.model.set(that.options.editKey, that.wysiwyg.document.body.innerHTML);
+			}, 100);
+			// if(that.options.adaptHeight>0){
 				// if(that.heightTimer) clearTimeout( that.heightTimer );
 				// that.heightTimer = setTimeout(function(){
 
 				// }, 200);
 				// console.log( $(that.wysiwyg.document.body).height() )
-			}
+			// }
+		}).bind('click', function(){
+			$(that.wysiwyg.document).find('#defaultValue').remove();
+			// that.focus();
+		}).one('keydown', function(){
+			$(that.wysiwyg.document).find('#defaultValue').remove();
 		});
-		// this.$el.find('iframe').bind('mousewheel DOMMouseScroll', function(e){
-		// 	e.stopPropagation();
-		// 	e.preventDefault();
-		// 	e.cancelBubble = true;
-		// });
 
 		setTimeout(function(){
 			that.focus();
@@ -90,19 +100,19 @@ body:hover::-webkit-scrollbar-thumb{background-color:rgba(0, 0, 0, 0.5);}\
 				}
 				that.$el.find('.jm_new_attachments').show();
 				that.model.set('attaches_list', atts);
-				that.$el.find('.editor_content').css({top: that.getToolbarHeight()+10, bottom: that.getAttachHeight()+10});
+				that.$el.find('.editor_content').css({top: 34, bottom: that.getAttachHeight()});
 			},
 			attachOnRemove: function(d){
 				var atts = that.model.get('attaches_list');
 				atts = _.filter(atts, function(item){ return item.id!=d; });
 				if(atts.length<1){
 					that.$el.find('.jm_new_attachments').hide();
-					that.$el.find('.editor_content').css({top: that.getToolbarHeight()+10, bottom: 10});
+					that.$el.find('.editor_content').css({top: 34, bottom: 0});
 				}
 				that.model.set('attaches_list', atts);
 			}
-		, uploadAction: this.options.uploadAction || basurl+'/file/upload', apptype:this.options.apptype});
-		this.$el.find('.editor_content').css({top: that.getToolbarHeight()+10, bottom: 10});
+		, uploadAction: this.options.uploadAction || basurl+'/file/upload', apptype:this.options.apptype, pasteReg: this.options.pasteReg});
+		this.$el.find('.editor_content').css({top: 34, bottom: 0});
 		return this;
 	},
 	events: {
@@ -215,13 +225,13 @@ jw.editor.menu = Backbone.View.extend({
 		}).mousedown(function(e){
 			$('.jw-dropdown,.edtool_color_w').addClass('hide');
 		}).unbind('paste').bind('paste', function(e) {
-			if(isIE) return;
 			var clipboardData = e.clipboardData || e.originalEvent.clipboardData;
 			if( clipboardData==window.undefined ){
 				e.stopPropagation();
 				e.preventDefault();
 				return;
 			}
+			if(isIE) return;
 			var items = clipboardData.items;
 			if(items!=window.undefined && items.length>0){
 				var item = items[0];
@@ -230,9 +240,24 @@ jw.editor.menu = Backbone.View.extend({
 					var id = jw.guid();
 					bolb.fileName = null;
 					bolb.name = 'Screenshot_'+id+'.'+bolb.type.replace('image/', '');
-					var img = '<br><img class="tmp" id="'+id+'" src="/public/images/loading.gif">&nbsp;<br>';
+					var img = '<br><img class="tmp" id="'+id+'" src="'+SrcFolder+'/public/images/loading.gif">&nbsp;<br>';
 					that.execCommand('insertHTML', img);
 					that.uploadInClipboardData(bolb, id);
+				}else if(item.type=='text/plain'){
+					var text = clipboardData.getData('text/html');
+					if(typeof that.options.pasteReg=='function'){
+						text = that.options.pasteReg(text);
+						// console.log('走着里面了么',text)
+						that.execCommand('insertHTML', text);
+						e.stopPropagation();
+						e.preventDefault();
+						return;
+					}
+					// else{
+					// 	text = text.replace(/<style(.*?)<\/style>/img, '');
+					// 	text = text.replace(/class="(.*?)"/img, '');
+					// 	text = text.replace(/style="(.*?)"/img, '');
+					// }
 				}
 			}else{
 				if(clipboardData&&clipboardData.types){
@@ -282,7 +307,7 @@ jw.editor.menu = Backbone.View.extend({
 			EnterAppendEvt: function(){},
 			LeaveAppendEvt: function(){},
 			onSubmit: function(id, file){
-				var param = '<br><img class="tmp" id="inner_attt_'+id+'" src="/public/images/loading.gif">&nbsp;<br>';
+				var param = '</br>&nbsp;<img class="tmp" id="inner_attt_'+id+'" src="'+SrcFolder+'/public/images/loading.gif">&nbsp;</br>';
 				that.editWindow.document.body.focus();
 				that.restoreSelection();
 				if( isIE ){
@@ -301,16 +326,8 @@ jw.editor.menu = Backbone.View.extend({
 			},
 			onComplete:function(id,fileName,responseJSON){
 				var img = that.editor.find('#inner_attt_'+id);
-				if(that.options.apptype!='jw_n_subscribe'){
-					img.attr('src', basurl+'/file/vieworiginal?id='+responseJSON.id);
-				}else{
-					img.attr('src', basurl+'/file/viewresizel?id='+responseJSON.id);
-				}
-				img.attr('id', responseJSON.id);
-				img.load(function(){
-					if(that.editorView) that.editorView.fresh();
-					if(responseJSON.width>800) img.width(800);
-				});
+				img.attr('src',responseJSON['data']);
+				that.editorView.fresh();
 			},
 			onError:function(error){
 				switch(error.type){
@@ -840,8 +857,8 @@ jw.editor.menu = Backbone.View.extend({
 			},
 			onComplete:function(id,fileName,responseJSON){
 				$('#jm_attachment_'+id).attr('rel', responseJSON.id);
+				that.model.trigger('add_attachment', {fileinfo:responseJSON, attachmentElHeight: $('.jm_new_attachments').outerHeight() });
 				that.options.attachOnAdd(responseJSON);
-				that.model.trigger('add_attachment', responseJSON);
 				$('#jm_attachment_'+id+' .jm_progress').remove();
 				if( !jw.UploadHandlerXhr.isSupported() ){
 					$('#jm_attachment_'+id+' img').attr('src', responseJSON.append.thumbnails.link);

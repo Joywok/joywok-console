@@ -1,5 +1,27 @@
 $(function(){
 
+  /*
+                       _ooOoo_
+                      o8888888o
+                      88" . "88
+                      (| -_- |)
+                      O\  =  /O
+                   ____/`---'\____
+                 .'  \\|     |//  `.
+                /  \\|||  :  |||//  \
+               /  _||||| -:- |||||-  \
+               |   | \\\  -  /// |   |
+               | \_|  ''\---/''  |   |
+               \  .-\__  `-`  ___/-. /
+             ___`. .'  /--.--\  `. . __
+          ."" '<  `.___\_<|>_/___.'  >'"".
+         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+         \  \ `-.   \_ __\ /__ _/   .-` /  /
+    ======`-.____`-.___\_____/___.-`____.-'======
+                       `=---='
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                 佛祖保佑       永无BUG
+    */
 
   _.each(types,function(item){
     item["key"] = item['id'];
@@ -7,12 +29,12 @@ $(function(){
   })
   types.unshift({key:'0',id:'0',name:'所有',txt:'所有'})
 
+  var publish_types = new Object(types);
+
   _.each(authors,function(item){
     item['key'] = item["id"]
     item["txt"] = item["name"]
   })
-
-  console.log(types,authors);
 
 	var blog = {};
 
@@ -36,18 +58,21 @@ $(function(){
     events:{
       'click .list-item-edit':'edit',
       'click .list-item-input-save':'edit_save',
-      'click .list-item-input-cancel':'cance_save'
+      'click .list-item-input-cancel':'cance_save',
+      'click .list-item-remove':'removeType',
+      'click .goB':'changePost',
+      'click .goT':'changePost'
     },
     initialize:function(){
       var self = this;
-      _.bindAll(this,'render','remove')
+      _.bindAll(this,'render','remove','removeType')
       this.model.bind('change',this.render)
       this.model.bind('remove destroy',this.remove);
     },
     render:function(){
       var index = this.model.collection.indexOf(this.model);
       if(index%2 == 1) this.$el.addClass('even');
-      if(!this.model.get("isNew")){
+      if(!this.model.get("isnew")){
         if(index == 0){
           if(this.model.collection.length==1){
             this.$el.addClass('noGoT')
@@ -57,17 +82,20 @@ $(function(){
           }
         }else{
           if(index == this.model.collection.length-1){
-            if(this.model.collection.length==2) this.$el.addClass('noGoB')
+            if(this.model.collection.length==1){
+              this.$el.addClass('noGoT')
+            }
+            this.$el.addClass('noGoB')
           }
         }
         this.model.set({index:index})
       }
+      // '+(!this.model.get("isnew")?'<div class="list-item-remove" model-id="'+this.model.get("id")+'"></div>':'')+'\
       this.$el.html('<div class="list-item-w">\
                         <div class="list-item-c">\
-                            <div class="list-item-num">'+(!this.model.get("isNew")?index:'')+'</div>\
+                            <div class="list-item-num">'+(!this.model.get("isnew")?index:'')+'</div>\
                             <div class="list-item-edit"></div>\
                             <div class="list-item-content">\
-                                '+(!this.model.get("isNew")?'<div class="list-item-remove" model-id="'+this.model.get("id")+'"></div>':'')+'\
                                 <div class="list-item-opear">\
                                     <div class="goB" action-type="B" model-id="'+this.model.get("id")+'"></div>\
                                     <div class="goT" action-type="T" model-id="'+this.model.get("id")+'"></div>\
@@ -121,20 +149,23 @@ $(function(){
       this.$el.removeClass('editing');
       this.input_w.addClass('hide')
       this.name_c.removeClass('hide');
-      if(this.model.get("isNew")){
-        this.model.unset('isNew',{silent:true})
+      if(this.model.get("isnew")){
+        this.model.unset('isnew',{silent:true})
         Backbone.sync('create',null,{url:basurl+'/blog/type',data:JSON.stringify({name:this.model.get("name")}),success:function(resp){
-          self.model.set(resp,{silent:true});
-          self.model.collection.trigger('reset')
+          if(resp['ret'] == 'success'){
+            self.model.set({name:self.model.get("name"),id:resp["data"]['id'],key:resp["data"]['id'],txt:self.model.get("name")},{silent:true});
+            self.model.collection.trigger('reset');
+          }
         }})
       }else{
         this.model.save({name:this.model.get("name"),id:this.model.get("id")},{patch:true,success:function(resp){
+          self.model.set({txt:self.model.get("name")});
           self.save_c.attr('disabled','disabled').html('保存');
         }})
       }
     },
     cance_save:function(){
-      if(this.model.get("isNew")){
+      if(this.model.get("isnew")){
         this.model.collection.remove(this.model)
       }else{
         this.model.set({name:this.old_title})
@@ -143,7 +174,39 @@ $(function(){
         this.name_c.removeClass('hide');
         this.save_c.attr('disabled','disabled').html('保存');
       }
-
+    },
+    removeType:function(){
+      var self = this;
+      new jw.Confirm({content:'确认删除此栏目么？此操作不可恢复。',confirm:function(){
+        self.model.destroy({url:basurl+'/blog/type',data:JSON.stringify({id:self.model.get("id")}),success:function(){
+          // self.model.collection.remove(self.model);
+          console.log(self.model.collection)
+          // self.model.collection.trigger("reset")
+        }})
+      }});
+    },
+    changePost:function(evt){
+      var self = this;
+      var target = $(evt.currentTarget);
+      var model = this.model
+      var type = target.attr('action-type');
+      var moved_mode;
+      console.log(model.toJSON(),'xxxxx')
+      if(type == 'T'){
+        var index = parseInt(model.get("index"));
+        model.set({index:index-1},{silent:true});
+        moved_mode = this.model.collection.at(index-1)
+        moved_mode.set({index:index},{silent:true});
+      }else{
+        var index = parseInt(model.get("index"));
+        model.set({index:index+1},{silent:true});
+        moved_mode = this.model.collection.at(index+1)
+        moved_mode.set({index:index},{silent:true});
+        console.log(index+1,index)
+      }
+      Backbone.sync('update',null,{url:basurl+'/blog/typesort',data:JSON.stringify({id:model.get("id"),sid:moved_mode.get("id")}),success:function(resp){
+        if(resp['ret'] == 'success') self.model.collection.sortData();
+      }})
     },
     setFocus:function(){
       this.input.setFocus()
@@ -157,12 +220,37 @@ $(function(){
   })
   blog.setting_Collection = Backbone.Collection.extend({
     model:blog.setting_model,
+    initialize:function(){
+      this.data = {};
+    },
+    parse:function(data,options){
+      this.data['parseno'] = data["data"]['pagination']['pagenum'];
+      this.data['num'] = parseInt(data["data"]['pagination']['pagesum']);
+      var listData = data["data"]['articles'];
+      return listData
+    },
+    getData:function(options,type,func){
+      var self = this;
+      _.extend(this.data,options);
+      var data = {
+        pageno:this.data['pageno'],
+        type:this.data["type"],
+        pagesize:10
+      }
+      var time = new jw.SysNotice({type  : 2,text  : '努力加载中……',delay:1000});
+      this.fetch({url:basurl+'/blog/list',data:data,reset:(type=="update"?false:true),remove:(type=="update"?false:true),success:function(collection,resp){
+        time.HideBar()
+        self.trigger('list:change')
+        if(func) func()
+      }})
+    },
     sortData:function(){
       var data = _.sortBy(this.toJSON(),function(item){
-        return Math.max(item['index'])
+        return Math.max(item['index']);
       });
-      this.remove(this.models)
-      this.add(data)
+      //console.log(data);
+      this.remove(this.models);
+      this.add(data);
     }
   })
   blog.setting_m = Backbone.Model.extend()
@@ -170,10 +258,8 @@ $(function(){
     events:{
       'click .cancel-save':'cancelSave',
       'click .list-title-save':'saveAll',
-      'click .goB':'changePost',
-      'click .goT':'changePost',
-      'click .list-item-remove':'removeType',
-      'click .new-type':'newType',
+      
+      'click .list-title-new':'newType',
       'click .list-title-submit':'publish'
     },
     initialize:function(options){
@@ -182,10 +268,10 @@ $(function(){
       this.model = new blog.setting_m(this.data)
       this.old_model = this.model.clone();
       this.collection = new blog.setting_Collection(this.data);
-      this.$el = $('<div class="m-i setting"></div>');
+      this.$el = $('<div class="m-i-c setting"></div>');
       this.$el.css({left:this.parentEl.width()+'px',width:this.parentEl.width()+'px'});
       this.parentEl.append(this.$el);
-      this.$el.stop().animate({left:0},500,function(){
+      this.$el.stop().animate({left:'190px'},500,function(){
         self.$el.css({width:'auto'});
       })
       this._init_main();
@@ -194,42 +280,27 @@ $(function(){
       this.addAll();
     },
     _init_main:function(){
-      this.$el.html('<div class="m-i-t">\
-                          <div class="m-i-ico-c">\
-                              <div class="m-i-ico"></div>\
-                          </div>\
-                          <div class="m-i-t-opear">\
-                            <div class="m-i-t-opear-i active" action-type="1">栏目管理</div>\
-                          </div>\
-                          <div class="m-i-t-b">\
-                              <div class="new-type">\
-                                  <div class="new-type-ico"></div>\
-                                  <div class="new-type-txt">撰写栏目</div>\
-                              </div>\
-                              <button type="button" class="cancel-save">返回</button>\
-                          </div>\
-                      </div>\
-                      <div class="m-i-c">\
-                        <div class="columns-list">\
-                          <div class="columns-w list-w">\
-                            <div class="list-top">\
-                                  <div class="list-title"></div>\
-                                  <button type="button" class="list-title-submit">发布</button>\
-                              </div>\
-                              <div class="list-sep"></div>\
-                              <div class="list-c-tip">\
-                                  <div class="list-tip-num">序号</div>\
-                                  <div class="list-tip-edit">编辑</div>\
-                                  <div class="list-tip-name">栏目名</div>\
-                              </div>\
-                              <div class="list-c">\
-                                  <div class="list-c-c">\
-                                  </div>\
-                                  <div class="list-c-addmore-c">\
-                                    <button class="list-c-addmore hide" type="button">加载更多</button>\
-                                  </div>\
-                              </div>\
-                          </div>\
+      // <button type="button" class="list-title-save" disabled="disabled">保存</button>\
+      this.$el.html('<div class="columns-list">\
+                        <div class="columns-w list-w">\
+                          <div class="list-top">\
+                                <div class="list-title">可拖动改变栏目显示顺序</div>\
+                                <button type="button" class="list-title-new">新建栏目</button>\
+                                <button type="button" class="list-title-submit">发布</button>\
+                            </div>\
+                            <div class="list-sep"></div>\
+                            <div class="list-c-tip">\
+                                <div class="list-tip-num">序号</div>\
+                                <div class="list-tip-edit">编辑</div>\
+                                <div class="list-tip-name">栏目名</div>\
+                            </div>\
+                            <div class="list-c">\
+                                <div class="list-c-c">\
+                                </div>\
+                                <div class="list-c-addmore-c">\
+                                  <button class="list-c-addmore hide" type="button">加载更多</button>\
+                                </div>\
+                            </div>\
                         </div>\
                       </div>')
     },
@@ -250,10 +321,23 @@ $(function(){
           self.save_btn.addClass('hide')
         }
       })
+      this.collection.bind('all',function(){
+        types = self.collection.toJSON();
+      })
+      this.collection.bind('list:change',function(){
+        var data = self.collection.data;
+        if(data['pageno'] == parseInt(data["num"])-1){
+          self.addmore_btn.addClass('hide');
+          self.container.css({bottom:'20px'})
+        }else{
+          self.addmore_btn.removeClass('hide')
+          self.container.css({bottom:'50px'})
+        }
+      })
     },
     addOne:function(model){
       var view = new blog.setting_view({model:model});
-      if(model.get('isNew')){
+      if(model.get('isnew')){
         this.container.prepend(view.render().el);
         view.edit();
         view.setFocus();
@@ -270,29 +354,8 @@ $(function(){
       }
     },
     saveAll:function(){
-      this.save_btn.html('保存中…').attr({disabled:'disabled'});
-      console.log('保存给服务器？')
-    },
-    changePost:function(evt){
-      var self = this;
-      var target = $(evt.currentTarget);
-      var model = this.collection.get(target.attr('model-id'));
-      var type = target.attr('action-type');
-      var moved_mode;
-      if(type == 'T'){
-        var index = parseInt(model.get("index"));
-        model.set({index:index-1});
-        moved_mode = this.collection.at(index-1)
-        moved_mode.set({index:index});
-      }else{
-        var index = parseInt(model.get("index"));
-        model.set({index:index+1});
-        moved_mode = this.collection.at(index+1)
-        moved_mode.set({index:index});
-      }
-      Backbone.sync('update',null,{url:basurl+'/blog/typesort',data:JSON.stringify({id:model.get("id"),sid:moved_mode.get("id")}),success:function(resp){
-        if(resp['ret'] == 'success') self.collection.sortData();
-      }})
+      // this.save_btn.html('保存中…').attr({disabled:'disabled'});
+      // console.log('保存给服务器？')
     },
     cancelSave:function(){
       this.removeEl();
@@ -304,28 +367,21 @@ $(function(){
         self.$el.remove();
       })
     },
-    removeType:function(evt){
-      var self = this;
-      var target = $(evt.currentTarget)
-      var model = this.collection.get(target.attr('model-id'));
-      new jw.Confirm({content:'确认删除此栏目么？此操作不可恢复。',confirm:function(){
-        model.destroy({url:basurl+'/blog/type',data:JSON.stringify({id:model.get("id")}),success:function(){
-          self.addAll();
-        }})
-      }});
-    },
     newType:function(){
-      this.collection.add({isNew:true})
+      this.collection.add({isnew:true})
     },
     publish:function(){
       var self = this;
       this.publish_btn.attr({disabled:'disabled'}).html('发布中…')
-      Backbone.sync("update",null,{url:basurl+'/',success:function(resp){
-        self.publish_btn.removeAttr('disabled').html('发布')
+      Backbone.sync("update",null,{url:basurl+'/blog/typepost',success:function(resp){
+        if(resp['ret'] == 'success'){
+          publish_types = self.collection.toJSON();
+          publish_types.unshift({key:'0',id:'0',name:'所有',txt:'所有'})
+          self.publish_btn.removeAttr('disabled').html('发布')
+        }
       }})
     }
   })
-
 	blog.sidbar = Backbone.View.extend({
 		events:{
 			'click .nav-item':'changTab',
@@ -345,19 +401,8 @@ $(function(){
 			this.nav_item.removeClass('active');
 			target.addClass('active');
 			this.trigger('tab:change',target.attr("action-type"))
-		},
-		setting:function(){
-      var data = _.filter(types,function(item){
-        return item['key'] !="0"
-      })
-      this.settings = new blog.setting({
-        parentEl:$('.main-c'),
-        data:data
-      })
 		}
 	})
-
-
 
   blog.show_View = Backbone.View.extend({
     className:'list-show-item',
@@ -367,16 +412,21 @@ $(function(){
       this.model.bind('destroy remove',this.remove)
     },
     render:function(){
+      // '+(this.model.get("type")&&this.model.get("type")!=""?'<div class="list-show-item-tag ellipsis" title="'+types[this.model.get("type")-1]['name']+'">'+types[this.model.get("type")-1]['name']+'</div>':'')+'\
+      console.log('这里走了么')
+      if(this.model.get("type")!='0'){
+        var type_obj = _.findWhere(publish_types,{id:this.model.get("type")})  
+      }
       this.$el.html('<div class="list-show-item-w">\
                           <div class="list-show-item-c">\
                               <div class="list-show-item-imgc">\
                                   <img src="'+this.model.get("img")+'"/>\
-                                  '+(this.model.get("tags")&&this.model.get("tags")!=""?'<div class="list-show-item-tag ellipsis" title="'+this.model.get("tags")+'">'+this.model.get("tags")+'</div>':'')+'\
+                                  '+(this.model.get("type")&&this.model.get("type")!='0'?'<div class="list-show-item-tag ellipsis">'+type_obj["name"]+'</div>':'')+'\
                               </div>\
                               <div class="list-show-item-name">'+this.model.get("title")+'</div>\
                               <div class="list-show-item-info">\
-                                  <span>'+this.model.get("name")+'</span>\
-                                  <span>'+this.model.get("intime")+'</span>\
+                                  <span>'+this.model.get("author")["name"]+'</span>\
+                                  <span>'+new Date(this.model.get("intime")*1000).FormatTime('yyyy-MM-dd')+'</span>\
                               </div>\
                           </div>\
                       </div>')
@@ -403,7 +453,7 @@ $(function(){
       this.$el.append(view.render().el)
     },
     addAll:function(){
-      this.$el.html('')
+      this.$el.html('');
       this.collection.each(this.addOne);
     }
   })
@@ -413,23 +463,35 @@ $(function(){
     initialize:function(){
       var self = this;
       _.bindAll(this,'render','remove');
-      this.model.bind('destroy remove',this.remove);
       this.model.bind('change',this.render)
+      this.model.bind('destroy remove',this.remove);
     },
     render:function(){
-      console.log(this.model.toJSON());
       var index = this.model.collection.indexOf(this.model);
       if(index%2 == 1) this.$el.addClass('even');
       if(index == 0){
-        if(this.model.collection.length==1){
-          this.$el.addClass('noGoT')
-          this.$el.addClass('noGoB')
-        }else{
-          this.$el.addClass('noGoT')
-        }
+          if(this.model.get('coverflag') == '1'){
+            this.$el.addClass('noGoB');  
+          }
+          this.$el.addClass('noGoT');
+          if(this.model.collection.length-1 == index){
+            this.$el.addClass('noGoB');
+          }
       }else{
-        if(index == this.model.collection.length-1){
-          if(this.model.collection.length==2) this.$el.addClass('noGoB')
+        if(index == 1){
+          if(this.model.collection.at(index-1).get("coverflag")== "1"){
+            this.$el.addClass('noGoT')
+          }
+          if(index == this.model.collection.length-1){
+            this.$el.addClass('noGoB')
+          }
+        }else{
+          if(index == this.model.collection.length-1){
+            if(this.model.collection.length==1){
+              this.$el.addClass('noGoT')
+            }
+            this.$el.addClass('noGoB')
+          }
         }
       }
       this.model.set({index:index})
@@ -438,7 +500,7 @@ $(function(){
                         <div class="list-item-c">\
                             <div class="list-item-num">'+index+'</div>\
                             <div class="list-item-edit" model-id="'+this.model.get("id")+'"></div>\
-                            <div class="list-item-top '+(this.model.get("isCollage")&&this.model.get("isCollage")!=''?'active':'')+'" model-id="'+this.model.get("id")+'"></div>\
+                            <div class="list-item-top '+(this.model.get("coverflag")&&this.model.get("coverflag")=='1'?'active':'')+'" model-id="'+this.model.get("id")+'"></div>\
                             <div class="list-item-content">\
                                 <div class="list-item-remove" model-id="'+this.model.get("id")+'"></div>\
                                 <div class="list-item-opear">\
@@ -465,38 +527,76 @@ $(function(){
       this.data = {};
     },
     parse:function(data,options){
-      this.data['parseno'] = data["data"]['pagination']['pagenum'];
-      this.data['num'] = parseInt(data["data"]['pagination']['pagesum'])-1;
+      this.data['pageno'] = parseInt(data["data"]['pagination']['pagenum']);
+      this.data['num'] = parseInt(data["data"]['pagination']['pagesum']);
       var listData = data["data"]['articles'];
-      return listData
+      listData.reverse();
+      return this.sortData(listData);
     },
-		getData:function(options,func){
+		getData:function(options,type,func){
 			var self = this;
 			_.extend(this.data,options);
-			this.fetch({url:basurl+'/blog/list',data:this.data,success:function(collection,resp){
+      var data = {
+        pageno:this.data['pageno'],
+        type:this.data["type"],
+        pagesize:10
+      }
+      var time = new jw.SysNotice({type  : 2,text  : '努力加载中……'});
+			this.fetch({url:basurl+'/blog/list',data:data,reset:(type=="update"?false:true),remove:(type=="update"?false:true),success:function(collection,resp){
+        time.HideBar()
         self.trigger('list:change')
 				if(func) func()
 			}})
 		},
-    sortData:function(){
-       var data = _.sortBy(this.toJSON(),function(item){
-        return Math.max(item['index'])
-      });
-      this.remove(this.models);
-      this.add(data);
+    sortData:function(d){
+      if(d&&d.length!=0){
+        var data = d;
+        var coverflag = [];
+        var datas = [];
+        _.each(data,function(item){
+          if(item['coverflag'] == '1') coverflag.push(item)
+          else datas.push(item)
+        })
+        datas = _.sortBy(datas,function(item){
+          return Math.max(item['index'])
+        });
+        coverflag = coverflag.concat(datas);
+        return coverflag
+      }else{
+        var data = this.toJSON();
+        var coverflag = [];
+        var datas = [];
+        _.each(data,function(item){
+          if(item['coverflag'] == '1') coverflag.push(item)
+          else datas.push(item)
+        })
+        datas = _.sortBy(datas,function(item){
+          return Math.max(item['index'])
+        });
+        coverflag = coverflag.concat(datas);
+        this.remove(this.models);
+        this.add(coverflag);
+      }
+      // var data = this.toJSON();
+      // data = _.sortBy(data,function(item){
+      //   return Math.max(item['index'])
+      // });
+      // // coverflag = coverflag.concat(datas);
+      // this.remove(this.models);
+      // this.add(data);
     }
 	})
 	blog.list = Backbone.View.extend({
 		events:{
 			'click .m-i-t-opear-i':'changTab',
 			'click .new-blog':'newBlog',
-      'click .list-item-top':'setCollage',
-      'click .list-c-addmore':'getMore',
-      'click .goB':'changePost',
-      'click .goT':'changePost',
-      'click .list-item-remove':'removeBlog',
-      'click .list-item-edit':'editBlog',
-      'click .list-title-submit':'publish'
+      'click .m-i-c.list .list-item-top':'setCollage',
+      'click .m-i-c.list .list-c-addmore':'getMore',
+      'click .m-i-c.list .goB':'changePost',
+      'click .m-i-c.list .goT':'changePost',
+      'click .m-i-c.list .list-item-remove':'removeBlog',
+      'click .m-i-c.list .list-item-edit':'editBlog',
+      'click .m-i-c.list .list-title-submit':'publish'
 		},
 		initialize:function(options){
 			var self = this;
@@ -506,13 +606,15 @@ $(function(){
 			this.collection = new blog.list_collection();
 			this.$el = $('<div class="m-i list"><div class="spinner"></div></div>');
 			this.parentEl.append(this.$el);
-      this.collection.getData({type:1,pageno:0,pagesize:10},this._init)
+      this.collection.getData({type:1,pageno:0,pagesize:10},'reset',this._init)
 		},
     _init:function(){
       this._init_main();
       this._init_name();
       this.bindEvt();
+      this._init_show();
       this.addAll();
+      this.collection.trigger('list:change');
     },
 		_init_main:function(){
 			this.$el.html('<div class="m-i-t">\
@@ -522,6 +624,7 @@ $(function(){
                           <div class="m-i-t-opear">\
                               <div class="m-i-t-opear-i active" action-type="1">已发布</div>\
                               <div class="m-i-t-opear-i" action-type="0">未发布</div>\
+                              <div class="m-i-t-opear-i" action-type="types">栏目管理</div>\
                           </div>\
                           <div class="m-i-t-b">\
                               <div class="new-blog">\
@@ -530,7 +633,7 @@ $(function(){
                               </div>\
                           </div>\
                       </div>\
-                      <div class="m-i-c">\
+                      <div class="m-i-c list">\
                           <div class="list-show">\
                           </div>\
                           <div class="list-w">\
@@ -549,7 +652,7 @@ $(function(){
                                   <div class="list-c-c">\
                                   </div>\
                                   <div class="list-c-addmore-c">\
-                                    <button class="list-c-addmore hide" type="button">加载更多</button>\
+                                    <button class="list-c-addmore '+(this.collection.data["pageno"]>=this.collection["data"]["num"]-1?'hide':'')+'" type="button">加载更多</button>\
                                   </div>\
                               </div>\
                           </div>\
@@ -562,6 +665,8 @@ $(function(){
       this.collages = this.$el.find('.list-item-top');
       this.show_c = this.$el.find('.list-show');
       this.publish_btn = this.$el.find('.list-title-submit');
+      this.list_c = this.$el.find('.m-i-c.list');
+      this.addmore_btn = this.$el.find('.list-c-addmore');
 		},
     _init_show:function(){
       this.showControler = new blog.showControler({
@@ -575,16 +680,39 @@ $(function(){
       this.collection.bind('add',this.addOne);
       this.collection.bind('reset',this.addAll);
       this.collection.bind('list:change',function(){
-        console.log('这里触发了么？');
-        //判断是否还又可以加载的
+        var data = self.collection.data;
+        if(data['type'] == "1"){
+          if(self.collection.length!=0){
+            self.publish_btn.removeClass('hide');
+          }else{
+            self.publish_btn.addClass('hide');
+          }
+        }
+        if(data['pageno'] >= parseInt(data["num"])-1){
+          self.addmore_btn.addClass('hide');
+          self.container.css({bottom:'20px'});
+        }else{
+          self.addmore_btn.removeClass('hide');
+          self.container.css({bottom:'50px'});
+        }
+      })
+      $.subscribe('unpublish',function(evt,data){
+        self.collection.remove(data);
+        self.addAll();
       })
       $.subscribe('editSuccess',function(evt,data){
-        console.log(self.showType,data["showflag"])
         if(self.showType == data['showflag']){
+          if(self.collection.length ==0){
+            self.container.html('');
+          }
           if(self.collection.get(data['id'])){
             self.collection.add(data,{merge:true})
           }else{
-            self.collection.add(data)
+            data['isnew'] = true
+            self.collection.add(data,{at:1,silent:true})
+            // console.log(self.collection.toJSON())
+            // self.addAll();
+            self.collection.trigger('reset');
           }
         }else{
           if(self.collection.get(data['id'])){
@@ -595,21 +723,22 @@ $(function(){
     },
 		addOne:function(model){
 			var view = new blog.list_item_view({model:model})
-			this.container.append(view.render().el)
+      this.container.append(view.render().el)  
 		},
 		addAll:function(){
       var self = this;
 			this.container.html('');
 			if(this.collection.length!=0){
         setTimeout(function(){
-          self.list_w.css({left:'365px'})
+          self.list_w.css({left:'530px'})
         },200)
-        this._init_show();
+        if(this.collection.data["type"] =="1") self.publish_btn.removeClass('hide')
 				this.collection.each(this.addOne);
 			}else{
         setTimeout(function(){
-          self.list_w.css({left:0})
+          self.list_w.css({left:'190px'})
         },200)
+        if(this.collection.data["type"] =="1") self.publish_btn.addClass('hide')
 				this.container.html('<div class="list-c-none">还没有博客呢？撰写一份吧～</div>');
 			}
 		},
@@ -618,12 +747,29 @@ $(function(){
 			this.tabs_item.removeClass('active');
 			target.addClass('active');
       this.showType = target.attr("action-type");
-      if(this.showType == '0'){
-        this.list_w.addClass('unissues')
+      if(this.showType == "types"){
+        // this.list_c.stop().animate({opacity:0})
+        this.list_c.addClass('hide')
+        var data = _.filter(types,function(item){
+          return item['key'] !="0"
+        })
+        this.settings = new blog.setting({
+          parentEl:this.$el,
+          data:data
+        })
       }else{
-        this.list_w.removeClass('unissues')
+        // this.list_c.stop().animate({opacity:1})
+        this.list_c.removeClass('hide')
+        if(this.settings){
+          this.settings.removeEl()
+        }
+        if(this.showType == '0'){
+          this.list_w.addClass('unissues')
+        }else{
+          this.list_w.removeClass('unissues')
+        }
+  			this.collection.getData({type:this.showType,pageno:0},'reset',this.addAll)
       }
-			this.collection.getData({type:this.showType,pageno:0,update:false,remove:true,add:false},this.addAll)
 		},
 		newBlog:function(evt){
 			this.trigger('new-blog');
@@ -636,14 +782,16 @@ $(function(){
       Backbone.sync('update',null,{url:basurl+'/blog/cover',data:JSON.stringify({id:model.get("id")}),success:function(resp){
         if(resp["ret"] == 'success'){
           _.each(self.collection.models,function(item){
-            item.set({isCollage:false})
+            item.set({coverflag:0},{silent:true})
           })
-          model.set({isCollage:true})
+          model.set({coverflag:1},{silent:true})
+          self.collection.sortData();
+          new jw.SysNotice({type  : 2,text  : '设置封面成功',delay:1000});
         }
       }})
     },
     getMore:function(){
-      this.collection.getData({pageno:(this.collection.data['parseno']+1),update:true,remove:false,add:true})
+      this.collection.getData({pageno:(parseInt(this.collection.data['pageno'])+1)},'update')
     },
     changePost:function(evt){
       var self = this;
@@ -653,40 +801,45 @@ $(function(){
       var moved_mode;
       if(type == 'T'){
         var index = parseInt(model.get("index"));
-        model.set({index:index-1});
-        moved_mode = this.collection.at(index-1)
-        moved_mode.set({index:index});
+        model.set({index:index-1},{silent:true});
+        moved_mode = this.collection.at(index-1);
+        moved_mode.set({index:index},{silent:true});
       }else{
         var index = parseInt(model.get("index"));
-        model.set({index:index+1});
-        moved_mode = this.collection.at(index+1)
-        moved_mode.set({index:index});
+        model.set({index:index+1},{silent:true});
+        moved_mode = this.collection.at(index+1);
+        moved_mode.set({index:index},{silent:true});
       }
       Backbone.sync('update',null,{url:basurl+'/blog/sort',data:JSON.stringify({id:model.get("id"),sid:moved_mode.get("id")}),success:function(resp){
-        if(resp['ret'] == 'success') self.collection.sortData();
+        if(resp['ret'] == 'success'){
+          self.collection.sortData();
+          new jw.SysNotice({type  : 2,text  : '移动成功',delay:1000});
+        }
       }})
     },
     removeBlog:function(evt){
       var self = this;
-      var target = $(evt.currentTarget)
+      var target = $(evt.currentTarget);
       var model = this.collection.get(target.attr('model-id'));
+      var url = model.get("showflag") == '1'?basurl+'/blog/post':basurl+'/blog/update/';
       new jw.Confirm({content:'确认删除此博客么？此操作不可恢复。',confirm:function(){
-        model.destroy({url:basurl+'/blog/update/',data:JSON.stringify({id:model.get("id")}),success:function(){
-          self.addAll();
+        model.destroy({url:url,data:JSON.stringify({id:model.get("id")}),success:function(resp){
+          if(resp) self.addAll();
         }})
       }});
     },
     editBlog:function(evt){
       var target = $(evt.currentTarget);
       var model = this.collection.get(target.attr('model-id'));
-      $.publish('editBlog',{id:model.get("id")})
+      $.publish('editBlog',{data:{id:model.get("id")}})
     },
     publish:function(){
       var self = this;
-      this.publish_btn.attr({disabled:"disabled"}).html('发表中…')
+      this.publish_btn.attr({disabled:"disabled"}).html('发布中…')
       Backbone.sync('update',null,{url:basurl+'/blog/post',success:function(resp){
         if(resp['ret'] == 'success'){
-          this.publish_btn.removeAttr("disabled").html('发表')
+          new jw.SysNotice({type  : 2,delay : 1000,text  : '发布成功'});
+          self.publish_btn.removeAttr("disabled").html('发布')
         }
       }})
     }
@@ -695,7 +848,7 @@ $(function(){
 	blog.new_blog_m = Backbone.Model.extend({
     url:basurl+'/blog/cmtnew',
 		defaults:{
-			img:'',
+			img:basurl+'/console/app/images/list-demo.jpg',
 			content:''
 		}
 	})
@@ -707,21 +860,21 @@ $(function(){
 		initialize:function(options){
 			var self = this;
 			_.extend(this,options);
-			this.model = new blog.new_blog_m()
+			this.model = new blog.new_blog_m();
       if(options['data']){
         this.model.set(options['data']);
         this.old_model = this.model.clone();
+        this.isEditParent.$el.addClass('hide');
       }
-			this.$el = $('<div class="m-i new"></div>')
-			this.$el.css({left:this.parentEl.width()+'px',width:this.parentEl.width()+'px'});
+      $('.m-i.list').addClass('hide')
+			this.$el = $('<div class="m-i new"><div class="spinner"></div></div>')
 			this.parentEl.append(this.$el);
-			this.$el.stop().animate({left:0},500,function(){
-				self.$el.css({width:'auto'});
-			})
-			this._init_main();
-      this._init_name();
-			this._init_func();
-      this.bindEvt();
+      setTimeout(function(){
+  			self._init_main();
+        self._init_name();
+  			self._init_func();
+        self.bindEvt();
+      },200)
 		},
 		_init_main:function(){
 			this.$el.html('<div class="m-i-t">\
@@ -791,7 +944,13 @@ $(function(){
         toolbar: {textDecoration:true, alignLeft:true, alignRight:true, alignRight:true, ul:true, url:true,image:true},  // 工具栏,zoom:true
         model: this.model,
         editKey: 'content',
-        el: this.$el.find('.new-blog-content-c')
+        el: this.$el.find('.new-blog-content-c'),
+        pasteReg:function(html){
+          html = html.replace(/(href="(.*?)")|(style="(.*?)")/img,'');
+          return html;
+        },
+        uploadAction:basurl+'/blog/upload',
+        styles:'div,section h1,section p,section div,section a{margin:0 0 10px 0;font-size: 16px!important;line-height: 30px!important;color: #999!important;} img{max-width:700px!important;} body{margin:0 0 10px 0!important;font-size: 16px!important;line-height: 30px!important;color: #999!important;}'
       });
 		},
     bindEvt:function(){
@@ -809,7 +968,7 @@ $(function(){
             self.save_btn.attr('disabled','disabled')
           }
         }else{
-          if(this.get('title')!=""){
+          if(this.get('title')!=""&&this.get('content')!=''){
             self.save_btn.removeAttr('disabled')
           }else{
             self.save_btn.attr('disabled','disabled')
@@ -833,35 +992,45 @@ $(function(){
       Backbone.sync((this.old_model?"update":'create'),null,{url:basurl+'/blog/cmtnew',data:data,success:function(resp){
         if(resp["data"]){
           if(self.isEdit){
-            if(self.isEditParent) self.isEditParent.model.set(self.model.toJSON())
-            if(self.isEditModel) self.isEditModel.set(self.model.toJSON())
             self.removeEl();
+            if(self.isEditParent){
+              console.log(resp["data"])
+              self.isEditParent.model.set(resp["data"]);
+              // self.isEditParent.old_model.set(resp["data"]);
+            }
+            self.isEditParent.$el.removeClass('hide');
           }else{
+            self.model.set({id:resp['data']['url'].split('?id=')[1]},{silent:true})
             self.trigger('saveSuccess',self.model.toJSON())
           }
         }
       }})
 		},
     cancelSave:function(){
-      this.removeEl();
+      if(this.isEditParent){
+        this.isEditParent.$el.removeClass('hide')
+      }else{
+        $('.m-i.list').removeClass('hide')
+      }
+      this.$el.remove();
     },
 		removeEl:function(func){
 			var self = this;
-			var width = this.parentEl.width();
-			this.$el.stop().animate({left:width+'px',width:width+'px'},500,function(){
-				self.$el.remove();
-				if(func && typeof func == 'function') func()
-			})
+			this.$el.remove();
+			if(func && typeof func == 'function') func()
 		}
 	})
 	
 	blog.edit_blog_m = Backbone.Model.extend({
     url:basurl+'/blog/cmtnew',
     defaults:{
-      intime:jw.timetostamp_now(jw.systime),
+      intime:parseInt(jw.timetostamp_now(jw.systime)),
       author:authors[0],
-      type:types[0]['id']+'',
-      seodescription:''
+      type:'0',
+      seodescription:'',
+      img:basurl+'/console/app/images/list-demo.jpg',
+      content:'',
+      title:''
     }
   })
 	blog.edit_blog = Backbone.View.extend({
@@ -872,27 +1041,25 @@ $(function(){
 			'click .edit-submit-btn':'publish',
       'click .edit-unsubmit-btn':'unpublish',
 			'click .edit-show-t-edit':'editContent',
-      'click .edit-item-submit':'saveItem'
+      'click .edit-updata-btn':'upData'
 		},
 		initialize:function(options){
 			var self = this;
 			_.extend(this,options);
 			_.bindAll(this,'_init','_init_show');
+      $('.m-i.list').addClass('hide')
 			this.model = new blog.edit_blog_m();
-			this.$el = $('<div class="m-i edit"><div class="spinner"></div></div>');
-			this.$el.css({left:this.parentEl.width()+'px',width:this.parentEl.width()+'px'});
-			this.parentEl.append(this.$el);
-      this.$el.stop().animate({left:0},500,function(){
-        self.$el.css({width:'auto'});
-      })
       if(this.newParent){
-        this.newParent.removeEl(this._init)
+        this.newParent.removeEl();
       }
-      Backbone.sync('read',null,{url:basurl+'/blog/article?id='+this.id,success:function(resp){
-        self.model.set(resp["data"]);
-        console.log(self.model.toJSON())
-        self.old_model = self.model.clone();
-        self._init()
+			this.$el = $('<div class="m-i edit"><div class="spinner"></div></div>');
+			this.parentEl.append(this.$el);
+      Backbone.sync('read',null,{url:basurl+'/blog/article?id='+this.data["id"],success:function(resp){
+        if(resp){
+          self.model.set(resp["data"]);
+          self.old_model = self.model.clone();
+          self._init();
+        }
       }})
 		},
 		_init:function(){
@@ -903,8 +1070,6 @@ $(function(){
       this.bindEvt();
 		},
 		_init_main:function(){
-      //<button type="button" class="edit-save-btn">保存</button>\
-      // <button type="button" class="edit-cancel-btn">放弃</button>\
 			this.$el.html('<div class="m-i-t">\
 					            <div class="m-i-ico-c">\
 					                <div class="m-i-ico"></div>\
@@ -914,7 +1079,9 @@ $(function(){
 					            </div>\
 					            <div class="m-i-t-b">\
                           <button type="button" class="edit-unsubmit-btn '+(this.model.get("showflag")==0?'hide':'')+'">下架</button>\
-					                <button type="button" class="edit-submit-btn '+(this.model.get("showflag")==0?'':'hide')+'">发表</button>\
+					                <button type="button" class="edit-submit-btn '+(this.model.get("showflag")==1?'hide':'')+'">发表</button>\
+                          <button type="button" class="edit-updata-btn '+(this.model.get("showflag")==1?'':'hide')+'" disabled="disabled">更新发布</button>\
+                          <button type="button" class="edit-save-btn" disabled="disabled">保存</button>\
                           <button type="button" class="edit-back-btn">返回</button>\
 					            </div>\
 					        </div>\
@@ -951,7 +1118,6 @@ $(function(){
 					                                    </div>\
 					                                    <div class="edit-opear">\
 					                                        <div class="edit-select"></div>\
-					                                        <button type="button" class="edit-item-submit" action-type="author" disabled="disabled">提交</button>\
 					                                    </div>\
 					                                </div>\
 					                            </div>\
@@ -960,7 +1126,6 @@ $(function(){
 					                                <div class="edit-item-c">\
 					                                    <div class="edit-opear">\
 					                                        <div class="edit-select"></div>\
-					                                        <button type="button" class="edit-item-submit" action-type="type" disabled="disabled">提交</button>\
 					                                    </div>\
 					                                </div>\
 					                            </div>\
@@ -969,7 +1134,6 @@ $(function(){
 					                                <div class="edit-item-c">\
 					                                    <div class="edit-opear">\
 					                                        <div class="edit-input"></div>\
-					                                        <button type="button" class="edit-item-submit" action-type="tags" disabled="disabled">提交</button>\
 					                                    </div>\
 					                                </div>\
 					                            </div>\
@@ -978,7 +1142,6 @@ $(function(){
 					                                <div class="edit-item-c">\
 					                                    <div class="edit-opear">\
 					                                        <div class="edit-input"></div>\
-					                                        <button type="button" class="edit-item-submit" action-type="intime" disabled="disabled">提交</button>\
 					                                    </div>\
 					                                </div>\
 					                            </div>\
@@ -987,7 +1150,6 @@ $(function(){
 					                                <div class="edit-item-c">\
 					                                    <div class="edit-opear">\
 					                                        <div class="edit-input"></div>\
-					                                        <button type="button" class="edit-item-submit" action-type="seotitle" disabled="disabled">提交</button>\
 					                                    </div>\
 					                                </div>\
 					                            </div>\
@@ -996,16 +1158,14 @@ $(function(){
 					                                <div class="edit-item-c">\
 					                                    <div class="edit-opear">\
 					                                        <div class="edit-input"></div>\
-					                                        <button type="button" class="edit-item-submit" action-type="seokeywords" disabled="disabled">提交</button>\
 					                                    </div>\
 					                                </div>\
 					                            </div>\
-                                      <div class="edit-item description">\
+                                      <div class="edit-item seodescription">\
                                           <div class="edit-item-title">描述</div>\
                                           <div class="edit-item-c">\
                                               <div class="edit-opear">\
                                                   <div class="edit-input"></div>\
-                                                  <button type="button" class="edit-item-submit" action-type="description" disabled="disabled">提交</button>\
                                               </div>\
                                           </div>\
                                       </div>\
@@ -1019,6 +1179,8 @@ $(function(){
 			this.show_c = this.$el.find('.edit-show-main');
       this.publish_btn = this.$el.find('.edit-submit-btn');
       this.un_publish_btn = this.$el.find('.edit-unsubmit-btn');
+      this.save_btn = this.$el.find('.edit-save-btn');
+      this.updata_btn = this.$el.find('.edit-updata-btn')
       this.status_c = this.$el.find('.edit-status span')
 		},
 		_init_func:function(){
@@ -1038,20 +1200,31 @@ $(function(){
           self.old_model.set(resp)
         }
       })
-      this.old_model.bind('change',this._init_show)
+      // this.model.bind('change',this._init_show);
+      this.model.bind('change',function(){
+        self._init_show()
+        var data = self.old_model.changedAttributes(self.model.toJSON());
+        if(data){
+          self.updata_btn.removeAttr('disabled');
+          self.save_btn.removeAttr('disabled');
+        }else{
+          self.updata_btn.attr({disabled:'disabled'});
+          self.save_btn.attr({disabled:'disabled'});
+        }
+      })
     },
 		_init_show:function(){
 			this.show_c.html('<div class="edit-show-pic">\
-                                <img src="'+this.old_model.get("img")+'">\
+                                <img src="'+this.model.get("img")+'">\
                             </div>\
                             <div class="edit-show-info">\
                                 <span>by</span>\
-                                <span class="specail">'+this.old_model.get("author")["name"]+'</span>\
-                                <span>'+new Date(this.old_model.get("intime")*1000).FormatTime('yyyy-MM-dd')+'</span>\
+                                <span class="specail">'+this.model.get("author")["name"]+'</span>\
+                                <span>'+new Date(this.model.get("intime")*1000).FormatTime('yyyy-MM-dd')+'</span>\
                             </div>\
-                            <div class="edit-show-name">'+this.old_model.get("title")+'</div>\
+                            <div class="edit-show-name">'+this.model.get("title")+'</div>\
                             <div class="edit-show-content">\
-                              '+this.old_model.get('content')+'\
+                              '+this.model.get('content')+'\
                             </div>')
 		},
 		_init_create:function(){
@@ -1075,11 +1248,7 @@ $(function(){
                                 <div class="edit-creator-name">'+data["name"]+'</div>\
                                 <div class="edit-creator-title">'+(data["title"].length>30?data["title"].substring(0,35)+'...':data["title"])+'</div>\
                             </div>')
-        if(self.old_model.get("author")['id'] == resp['id']){
-          self.creator_btn.attr({disabled:'disabled'})
-        }else{
-          self.creator_btn.removeAttr('disabled')
-        }
+        
         self.model.set({author:data})
       })
 		},
@@ -1090,61 +1259,41 @@ $(function(){
 				el:this.$el.find('.edit-item.columns .edit-select'),
 				appendtype:1,
 				dropdownparams:{
-					items:types,
+					items:publish_types,
 					_default:this.model.get("type")
 				}
 			})
       this.columen.bind('change',function(resp){
-        if(self.old_model.get('type')!=resp['id']){
-          self.columen_btn.removeAttr('disabled')
-        }else{
-          self.columen_btn.attr({disabled:'disabled'})
-        }
         self.model.set({type:resp["id"]})
       })
 		},
 		_init_tags:function(){
       var self = this;
       this.tags_btn = this.$el.find('.edit-item.tag .edit-item-submit');
-      this.tags = new jw.taginput({
+      this.tags = new jw.input({
         el:this.$el.find('.edit-item.tag .edit-input'),
-        action:'tag',
-        tip:'+ 添加标签'
-      });
-      return 
-			// this.tags = new jw.Form.tag({
-			// 	el:this.$el.find('.edit-item.tag .edit-input'),
-			// 	name:'tags',
-      //   model:this.model,
-			// 	style:1
-			// })
+        tip:'每个标签用逗号分割',
+        style:1
+      })
+      this.tags.setTxt(this.model.get("tags"))
       this.tags.bind('change',function(resp){
-        if(self.old_model.get("tags")!=resp){
-          self.tags_btn.removeAttr('disabled')
-        }else{
-          self.tags_btn.attr({disabled:'disabled'})
-        }
         self.model.set({tags:resp})
       })
 		},
 		_init_date:function(){
       var self = this;
       this.time_btn = this.$el.find('.edit-item.time .edit-item-submit')
+      console.log(this.model.get("intime"))
       this.time = new jw.SelDate({
         el:this.$el.find('.edit-item.time .edit-input'),
         model:this.model,
         name:'intime',
-        _default:this.model.get('intime'),
+        _default:parseInt(this.model.get('intime')),
         stop_evt:1
       })
       this.time.bind('change',function(resp){
         var date = jw.timestamp(resp);
         console.log(self.old_model.get('intime'),date)
-        if(self.old_model.get('intime')!=date){
-          self.time_btn.removeAttr('disabled')
-        }else{
-          self.time_btn.attr({disabled:'disabled'})
-        }
         self.model.set({intime:date})
       })
 		},
@@ -1159,11 +1308,6 @@ $(function(){
 			})
       this.seo_title.setTxt(this.model.get("seotitle"))
       this.seo_title.bind('change',function(resp){
-        if(self.old_model.get('seotitle')!=resp){
-          self.seotitle_btn.removeAttr('disabled')
-        }else{
-          self.seotitle_btn.attr({disabled:'disabled'})
-        }
         self.model.set({seotitle:resp})
       })
 		},
@@ -1176,66 +1320,77 @@ $(function(){
 				name:'seoTag',
 				style:1
 			})
+      this.seo_tag.setTxt(this.model.get("seokeywords"))
       this.seo_tag.bind('change',function(resp){
-        if(self.old_model.get('seokeywords')!=resp){
-          self.seokeywords_btn.removeAttr('disabled')
-        }else{
-          self.seokeywords_btn.attr({disabled:'disabled'})
-        }
         self.model.set({seokeywords:resp})
       })
 		},
     _init_seo_description:function(){
       var self = this;
-      this.seodescription_btn = this.$el.find('.edit-item.description .edit-item-submit')
+      this.seodescription_btn = this.$el.find('.edit-item.seodescription .edit-item-submit')
       this.seodescription = new jw.input({
-        el:this.$el.find('.edit-item.description .edit-input'),
+        el:this.$el.find('.edit-item.seodescription .edit-input'),
         model:this.model,
-        name:'description',
+        name:'seodescription',
         style:1
       })
       this.seodescription.setTxt(this.model.get("seodescription"))
       this.seodescription.bind('change',function(resp){
-        if(self.old_model.get('description')!=resp){
-          self.seodescription_btn.removeAttr('disabled')
-        }else{
-          self.seodescription_btn.attr({disabled:'disabled'})
-        }
         self.model.set({seodescription:resp})
       })
     },
 		cancelSave:function(){
 			this.removeEl();
-      $.publish('editSuccess',this.model.toJSON())
 		},
-		save:function(){
-		},
-    saveItem:function(evt){
+		save:function(evt){
       var self = this;
       var target = $(evt.currentTarget);
-      var type = target.attr("action-type");
-      var data = {}
-      data[type] = this.model.get(type);
-      data['id'] = this.model.get("id");
+      target.html('保存中').attr({disabled:'disabled'});
+      var data = self.old_model.changedAttributes(self.model.toJSON());
+      data["id"] = this.model.get("id");
       this.model.save(data,{patch:true,success:function(resp){
-        self.old_model.set(data)
-        self.$el.find(".edit-item-submit[action-type='"+type+"']").attr({disabled:'disabled'})
+        target.html('保存').attr({disabled:'disabled'});
+        self.old_model.set(self.model.toJSON())
+        new jw.SysNotice({type  : 2,text  : '保存成功',delay:1000});
+        $.publish('editSuccess',self.model.toJSON());
+      }})
+		},
+    upData:function(evt){
+      var self = this;
+      var target = $(evt.currentTarget);
+      var data = self.old_model.changedAttributes(self.model.toJSON());
+      if(!data){
+        new jw.FormNotice({text:'您没有更改任何选项！修改后更新～'})
+        return 
+      }
+      data["id"] = this.model.get("id");
+      target.html('更新中…').attr({disabled:'disabled'})
+      Backbone.sync('update',null,{url:basurl+'/blog/savepost',data:JSON.stringify(data),success:function(resp){
+        target.html('更新').removeAttr('disabled')
+        new jw.SysNotice({type  : 2,text  : '更新成功',delay:1000});
+        $.publish('editSuccess',self.model.toJSON())
+        self.removeEl();
       }})
     },
 		publish:function(){
       var self = this;
+      var time = new jw.SysNotice({type  : 2,text  : '发表中……'});
       this.model.save({showflag:1,id:this.model.get("id")},{patch:true,success:function(resp){
-        self.status_c.html('已发表').addClass('publish')
-        self.publish_btn.addClass('hide');
-        self.un_publish_btn.removeClass('hide')
+        time.HideBar()
+        // self.status_c.html('已发表').addClass('publish')
+        // self.un_publish_btn.removeClass('hide');
+        $.publish('editSuccess',self.model.toJSON())
+        self.removeEl();
       }});
 		},
     unpublish:function(){
       var self = this;
+      var time = new jw.SysNotice({type  : 2,text  : '下架中…'});
       this.model.save({showflag:0,id:this.model.get("id")},{patch:true,success:function(resp){
+        time.HideBar();
         self.status_c.html('未发表').removeClass('publish')
-        self.publish_btn.removeClass('hide');
         self.un_publish_btn.addClass('hide');
+        $.publish('unpublish',self.model.get("id"))
       }});
     },
 		editContent:function(){
@@ -1248,10 +1403,8 @@ $(function(){
 		},
 		removeEl:function(){
 			var self = this;
-			var width = this.parentEl.width();
-			this.$el.stop().animate({left:width+'px',width:width+'px'},500,function(){
-				self.$el.remove();
-			})
+			this.$el.remove();
+      $('.m-i.list').removeClass('hide')
 		}
 	})
 
